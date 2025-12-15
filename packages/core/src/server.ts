@@ -65,8 +65,6 @@ export class CoreService {
 
     this.app.post('/api/mcp/start', async (request: any, reply) => {
         const { name } = request.body;
-        // In a real app, we'd look up the config from the ConfigGenerator or a cache
-        // For now, we manually reconstruct it or trust the client?
         // Let's use the generator to find the config for this specific server
         const allConfigStr = await this.configGenerator.generateConfig('json');
         const allConfig = JSON.parse(allConfigStr);
