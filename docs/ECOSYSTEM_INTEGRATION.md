@@ -57,3 +57,8 @@ This document outlines the strategy for integrating the extensive list of submod
 - **Integration:**
     - `lazy-mcp`, `MCP-Zero`: Ensure our "Progressive Disclosure" implementation is robust and feature-complete by comparing with these.
     - `mcp-tool-chainer`: Support direct multi-MCP tool chaining outside of Code Mode.
+
+## 10. Infrastructure Skills
+**Repo:** `references/claude-code-infrastructure-showcase`
+- **Role:** Reference.
+- **Integration:** Use this collection of skills and agents as a gold standard for infrastructure automation tasks (AWS, Docker, K8s) within the Hub.

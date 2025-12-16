@@ -15,7 +15,9 @@ We are adopting a **Hub/Proxy/Router** architecture, inspired by `metamcp`, `mcp
 ### Key Responsibilities of the Hub:
 1.  **Aggregation:** Connects to 50+ downstream MCP servers but presents a unified interface to the client.
 2.  **Progressive Disclosure:** Instead of exposing 1000 tools to the LLM context (costing 100k+ tokens), the Hub exposes only a few meta-tools (`search_tools`, `load_tool`, `run_code`).
-3.  **Traffic Inspection:** Acts as a "Wireshark for MCP" (Mcpshark), logging all requests/responses to a persistent database (Postgres + pgvector) for auditing and debugging.
+3.  **Traffic Inspection & Usage Tracking:**
+    - Acts as a "Wireshark for MCP" (Mcpshark), logging all requests/responses to a persistent database (Postgres + pgvector).
+    - **Cost Tracking:** Estimates token usage and cost per session based on model pricing and request size.
 4.  **Code Mode:** Provides a secure sandbox (Docker/V8) for the LLM to execute code (TypeScript/Python) that chains multiple tool calls efficiently.
 
 ## Detailed Feature Design
@@ -73,6 +75,12 @@ Inspired by `claude-lazy-loading` and `Switchboard`.
 - **`packages/core`**: The main Hub logic.
 - **`packages/ui`**: The Dashboard.
 
+## Implementation Strategy
+The development is guided by a strict roadmap found in [`ROADMAP.md`](./ROADMAP.md). We adopt a "Reference & Adapt" strategy:
+1.  **Analyze Reference:** Examine the submodule (e.g., `mcpenetes`).
+2.  **Extract Logic:** Port the core logic (e.g., client detection algorithms) into the Core Service (`packages/core`).
+3.  **Integrate:** Wire the logic into the Hub's Manager system.
+
 ## Ecosystem Integration
 The project leverages a vast ecosystem of submodules for specific capabilities. Please refer to [`docs/ECOSYSTEM_INTEGRATION.md`](./docs/ECOSYSTEM_INTEGRATION.md) for the detailed strategy on how `MCP-SuperAssistant`, `mux`, `smolagents`, and others are integrated into the architecture.
 
@@ -89,70 +97,3 @@ To fulfill the vision of a "Super AI Plugin", the Hub must seamlessly integrate 
 3.  **Code Mode:** Implement secure sandbox.
 4.  **Inspection:** Build "Mcpshark" UI features.
 5.  **Client Integration:** Implement the `ClientManager` to auto-configure the 50+ supported tools.
-## Architecture
-
-### Tech Stack
-- **Monorepo:** Managed via `pnpm workspaces`.
-- **Runtime:** Node.js (TypeScript).
-- **Core Service:** Fastify (HTTP) + Socket.io (WebSocket).
-- **UI:** React + Vite + Tailwind CSS.
-- **Communication:** Clients (VSCode ext, Chrome ext, CLI wrappers) talk to the Core Service via WebSocket/HTTP.
-
-### Component Breakdown
-
-#### 1. Core Service (`packages/core`)
-The "brain" of the operation. It runs locally (likely as a daemon) and:
-- Serves the **MetaMCP UI**.
-- Manages state for Agents, Skills, Hooks, Prompts, and Context.
-- Exposes WebSocket events for real-time updates.
-- Generates dynamic configuration for MCP tools.
-- Executes Hooks (commands, validation).
-
-#### 2. UI (`packages/ui`)
-A web-based control panel (based on MetaMCP) that allows the user to:
-- View and manage connected MCP servers.
-- Inspect the Activity Log (Hook events, Tool usage).
-- Browse and edit the Prompt Library, Agent definitions, and Skills.
-- Manage global Context and Memory.
-
-#### 3. Data Structures & Formats
-- **Toon:** A compacted JSON format for tool definitions. It aims for the tightest possible syntax for LLM consumption while maintaining a verbose internal description for semantic discovery.
-- **Hooks:** Defined in `hooks/hooks.json`. Events include `PreToolUse`, `PostToolUse`, `SessionStart`, etc.
-- **MCP Config:** Dynamically generated (JSON, TOML, XML) from the `mcp-servers/` directory.
-
-### Directory Structure
-- **`agents/`**: JSON definitions of sub-agents.
-- **`skills/`**: Markdown files (`.skill.md`) defining capabilities.
-- **`hooks/`**: Event handlers and configuration.
-- **`commands/`**: Markdown/Script files for custom commands.
-- **`mcp-servers/`**: Directories containing MCP server implementations or configurations.
-- **`prompts/`**: Prompt templates and libraries.
-- **`context/`**: Global context files and memory dumps.
-- **`marketplaces/`**: Placeholders for dynamic discovery of Agents, Skills, and MCPs.
-
-## Features & Capabilities
-
-### Hook System
-The system intercepts events from various integrations:
-- **Events:** `PreToolUse`, `PermissionRequest`, `PostToolUse`, `UserPromptSubmit`, `Notification`, `Stop`, `SubagentStop`, `SessionStart`, `SessionEnd`, `PreCompact`.
-- **Types:**
-    - `command`: Execute shell commands.
-    - `validation`: Validate file contents or project state.
-    - `notification`: Send alerts.
-
-### MCP Management
-- **Dynamic Loading:** Scans directories to find available servers.
-- **Orchestration:** Starts/Stops servers on demand.
-- **Traffic Sniffing:** Logs MCP traffic for debugging (via MetaMCP integration).
-- **Multi-Protocol Support:** Generates configs for tools requiring JSON, TOML, or XML setups.
-
-### Context & Memory
-- **Autosave:** Context memory is automatically saved.
-- **Handoff:** Supports context handoff between sessions or tools.
-- **Injection:** Inject context into browser or IDE sessions.
-
-## Future Roadmap
-- **Profile/Model Proxy:** Switcher for CLI tool backends.
-- **Prompt Improver:** Automated refinement of prompts.
-- **Skill Library:** Semantic search for progressive tool revealing.
-- **Cross-Platform:** Deep integration into VSCode, Chrome, and Terminal environments.

@@ -76,3 +76,15 @@
 [submodule "references/mcp-tool-chainer"]
 	path = references/mcp-tool-chainer
 	url = https://github.com/robertpelloni/mcp-tool-chainer
+[submodule "references/prompt-eng-tutorial"]
+	path = references/prompt-eng-tutorial
+	url = https://github.com/anthropics/prompt-eng-interactive-tutorial
+[submodule "references/awesome-llm-apps"]
+	path = references/awesome-llm-apps
+	url = https://github.com/Shubhamsaboo/awesome-llm-apps
+[submodule "references/agents-md"]
+	path = references/agents-md
+	url = https://github.com/agentsmd/agents.md
+[submodule "references/claude-code-infrastructure-showcase"]
+	path = references/claude-code-infrastructure-showcase
+	url = https://github.com/diet103/claude-code-infrastructure-showcase
