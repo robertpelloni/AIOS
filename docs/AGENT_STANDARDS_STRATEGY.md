@@ -16,6 +16,10 @@ Implement a robust "Context Manager" that understands and generates platform-spe
     *   `copilot-instructions.md` (for GitHub Copilot)
     *   `GEMINI.md` (for Gemini CLI)
 *   **Sync:** Ensure changes in the universal schema propagate to all platform-specific files.
+*   **Distributed Context Rules:**
+    *   Support the `.claude/rules/` pattern (nested subdirectories, recursion).
+    *   **Strategy:** Maintain a `.context/rules/` directory in the Hub that compiles into the platform-specific formats.
+    *   Reference: [`claude-code-config`](https://github.com/drewipson/claude-code-config) for config management patterns.
 
 ## 2. Multi-Platform Agent SDK
 **Reference:** [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/plugins)

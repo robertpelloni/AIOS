@@ -6,12 +6,15 @@ This document outlines the plan to integrate Anthropic's official prompt enginee
 
 ## 1. Core Features to Integrate
 
-### A. Prompt Improver
-*   **Goal:** Automatically refine user prompts based on Anthropic's guidelines (Clarity, XML Tags, Role prompting).
+### A. Prompt Improver & Modifiers
+*   **Goal:** Automatically refine user prompts based on Anthropic's guidelines (Clarity, XML Tags, Role prompting) and Gemini strategies.
 *   **Implementation:**
     *   Create a `refine_prompt` tool exposed via MCP.
     *   Use the "Prompt Generator" logic (metaprompt) to rewrite inputs.
-    *   UI: Add a "Magic Wand" button in the chat interface to optimize the current draft.
+    *   **UI Features:**
+        *   "Magic Wand" button to optimize drafts.
+        *   **Slash Commands / Shortcuts:** Implement modifiers like `/ELI5`, `/ACT AS`, `/CHAIN OF THOUGHT` (Reference: [Prompt Shortcuts](https://gist.github.com/Richard-Weiss/efe157692991535403bd7e7fb20b6695)).
+        *   **Thoughtbox:** Integrate [`thoughtbox`](https://github.com/Kastalien-Research/thoughtbox) logic to guide users in structuring complex thoughts before prompting.
 
 ### B. Interactive Tutorial & Eval
 *   **Goal:** Teach users how to write better prompts and evaluate their effectiveness.

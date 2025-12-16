@@ -88,3 +88,15 @@
 [submodule "references/claude-code-infrastructure-showcase"]
 	path = references/claude-code-infrastructure-showcase
 	url = https://github.com/diet103/claude-code-infrastructure-showcase
+[submodule "references/prompts/gemini-cli-tips"]
+	path = references/prompts/gemini-cli-tips
+	url = https://github.com/addyosmani/gemini-cli-tips
+[submodule "references/prompts/thoughtbox"]
+	path = references/prompts/thoughtbox
+	url = https://github.com/Kastalien-Research/thoughtbox
+[submodule "references/prompts/claude-code-system-prompts"]
+	path = references/prompts/claude-code-system-prompts
+	url = https://github.com/Piebald-AI/claude-code-system-prompts
+[submodule "references/config/claude-code-config"]
+	path = references/config/claude-code-config
+	url = https://github.com/drewipson/claude-code-config
