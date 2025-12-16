@@ -34,15 +34,17 @@ This document compiles the design decisions, planned features, and submodule int
 
 ## 3. Integrated Memory System
 **Status:** Planned
-**Reference:** `submodules/claude-mem`
+**Reference:** `docs/MEMORY_STRATEGY.md`
 
-*   **Objective:** Provide a shared, persistent memory across all clients.
+*   **Objective:** Provide a shared, persistent memory across all clients with seamless handoff.
 *   **Planned Features:**
     *   [ ] **Library Integration:** Adapt `claude-mem` core logic into `packages/core/src/lib/memory`.
+    *   [ ] **Session Handoff:** Implement "Save/Resume" logic (file-based snapshots) inspired by `vibeship-mind`.
+    *   [ ] **Semantic Search:** Integrate `txtai` concepts for knowledge retrieval.
     *   [ ] **Hook Bridging:**
-        *   `SessionStart`: Inject "Memory Index".
+        *   `SessionStart`: Inject "Memory Index" and "Last Snapshot".
         *   `PostToolUse`: Capture observations to vector DB.
-        *   `SessionEnd`: Generate summaries.
+        *   `SessionEnd`: Generate summaries and save session snapshot.
     *   [ ] **Tool Exposure:** Expose `mem-search` as a standard MCP tool via the Hub.
 
 ## 4. Code Mode & Sandboxing
@@ -120,7 +122,16 @@ This document compiles the design decisions, planned features, and submodule int
     *   [ ] **Marketplace Integration:** Connect to `skillsmp.com` and `prpm.dev`.
     *   [ ] **Standardization:** Convert all imported skills to OpenSkill/TOON format.
 
-## 12. Agent Standards & Context Management
+## 12. Specification & Architecture
+**Status:** Planned
+**Reference:** `docs/SPEC_AND_ARCH_STRATEGY.md`
+*   **Objective:** Integrate specification management and architectural best practices.
+*   **Planned Features:**
+    *   [ ] **Spec Editor:** UI to define/validate specs using `spec-kit`.
+    *   [ ] **Multi-Model Routing:** Intelligent routing logic adapted from `claude-code-router`.
+    *   [ ] **Agent Methodology:** Adopt `BMAD-METHOD` patterns for agent structure.
+
+## 13. Agent Standards & Context Management
 **Status:** Planned
 **Reference:** `docs/AGENT_STANDARDS_STRATEGY.md`
 *   **Objective:** Standardize agent behavior and context files across platforms.

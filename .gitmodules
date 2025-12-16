@@ -100,3 +100,36 @@
 [submodule "references/config/claude-code-config"]
 	path = references/config/claude-code-config
 	url = https://github.com/drewipson/claude-code-config
+[submodule "references/arch/spec-kit"]
+	path = references/arch/spec-kit
+	url = https://github.com/github/spec-kit
+[submodule "references/arch/CodeMachine-CLI"]
+	path = references/arch/CodeMachine-CLI
+	url = https://github.com/moazbuilds/CodeMachine-CLI
+[submodule "references/skills/dev-browser"]
+	path = references/skills/dev-browser
+	url = https://github.com/SawyerHood/dev-browser
+[submodule "references/arch/claude-code-router"]
+	path = references/arch/claude-code-router
+	url = https://github.com/musistudio/claude-code-router
+[submodule "references/agents/BMAD-METHOD"]
+	path = references/agents/BMAD-METHOD
+	url = https://github.com/bmad-code-org/BMAD-METHOD
+[submodule "references/skills/oai-skills"]
+	path = references/skills/oai-skills
+	url = https://github.com/eliasjudin/oai-skills
+[submodule "references/skills/skrills"]
+	path = references/skills/skrills
+	url = https://github.com/athola/skrills
+[submodule "references/toon"]
+	path = references/toon
+	url = https://github.com/toon-format/toon
+[submodule "references/memory/vibeship-mind"]
+	path = references/memory/vibeship-mind
+	url = https://github.com/vibeforge1111/vibeship-mind
+[submodule "references/memory/beads"]
+	path = references/memory/beads
+	url = https://github.com/steveyegge/beads
+[submodule "references/memory/txtai"]
+	path = references/memory/txtai
+	url = https://github.com/neuml/txtai
