@@ -99,3 +99,14 @@ This document compiles the design decisions, planned features, and submodule int
     *   [ ] **Prompt Improver:** "Magic Wand" to rewrite prompts using XML tags and best practices.
     *   [ ] **Eval Tool:** UI to run test cases against prompt templates.
     *   [ ] **Tutorial Mode:** Interactive guide ported from the official repo.
+
+## 10. Gemini Ecosystem & ADK
+**Status:** Planned
+**Reference:** `docs/GEMINI_INTEGRATION_STRATEGY.md`
+*   **Objective:** Deep integration with Google's Gemini CLI and Agent Development Kit.
+*   **Planned Features:**
+    *   [ ] **Gemini Extension:** Build the Hub as a first-class Gemini CLI extension.
+    *   [ ] **Skill Porter:** Auto-convert skills between Claude and Gemini formats.
+    *   [ ] **Computer Use:** Integrate Gemini-specific computer use extensions.
+    *   [ ] **ADK Support:** Implement Google's Agent Development Kit interfaces.
+    *   [ ] **A2A Protocol:** Support Agent-to-Agent communication standards.
