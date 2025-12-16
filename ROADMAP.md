@@ -111,7 +111,16 @@ This document compiles the design decisions, planned features, and submodule int
     *   [ ] **ADK Support:** Implement Google's Agent Development Kit interfaces.
     *   [ ] **A2A Protocol:** Support Agent-to-Agent communication standards.
 
-## 11. Agent Standards & Context Management
+## 11. Universal Skill Marketplace
+**Status:** Planned
+**Reference:** `docs/SKILL_INTEGRATION_STRATEGY.md`
+*   **Objective:** Aggregate and standardize skills from the entire ecosystem.
+*   **Planned Features:**
+    *   [ ] **Import Pipeline:** `scripts/import_skills.sh` to ingest from Git repos.
+    *   [ ] **Marketplace Integration:** Connect to `skillsmp.com` and `prpm.dev`.
+    *   [ ] **Standardization:** Convert all imported skills to OpenSkill/TOON format.
+
+## 12. Agent Standards & Context Management
 **Status:** Planned
 **Reference:** `docs/AGENT_STANDARDS_STRATEGY.md`
 *   **Objective:** Standardize agent behavior and context files across platforms.
