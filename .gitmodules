@@ -142,3 +142,27 @@
 [submodule "references/memory/cognee"]
 	path = references/memory/cognee
 	url = https://github.com/topoteretes/cognee
+[submodule "references/orchestration/laddr"]
+	path = references/orchestration/laddr
+	url = https://github.com/AgnetLabs/laddr
+[submodule "references/orchestration/claude-squad-smtg"]
+	path = references/orchestration/claude-squad-smtg
+	url = https://github.com/smtg-ai/claude-squad
+[submodule "references/agents/OpenHands"]
+	path = references/agents/OpenHands
+	url = https://github.com/OpenHands/OpenHands
+[submodule "references/agents/amplifier"]
+	path = references/agents/amplifier
+	url = https://github.com/microsoft/amplifier
+[submodule "references/agents/magentic-ui"]
+	path = references/agents/magentic-ui
+	url = https://github.com/microsoft/magentic-ui
+[submodule "references/agents/autogen"]
+	path = references/agents/autogen
+	url = https://github.com/microsoft/autogen
+[submodule "references/agents/agent-zero"]
+	path = references/agents/agent-zero
+	url = https://github.com/agent0ai/agent-zero
+[submodule "references/agents/openagents"]
+	path = references/agents/openagents
+	url = https://github.com/openagents-org/openagents

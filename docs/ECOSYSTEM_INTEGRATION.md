@@ -62,3 +62,28 @@ This document outlines the strategy for integrating the extensive list of submod
 **Repo:** `references/claude-code-infrastructure-showcase`
 - **Role:** Reference.
 - **Integration:** Use this collection of skills and agents as a gold standard for infrastructure automation tasks (AWS, Docker, K8s) within the Hub.
+
+## 11. Subagent Orchestration & Task Management
+This section focuses on managing complex workflows involving multiple agents and models.
+
+### Multi-Model Consensus
+**Repo:** `references/orchestration/ultra-mcp`
+- **Goal:** Implement "Debate & Consensus" patterns where Claude, Gemini, and GPT critique each other's work before final output.
+- **Integration:** Adapt `ultra-mcp` logic into the Hub's `AgentManager`.
+
+### Project Management
+**Repos:** `references/orchestration/agentic-project-management`, `references/orchestration/claude-task-master`, `references/orchestration/TaskSync`
+- **Goal:** Maintain project continuity across sessions.
+- **Integration:**
+    - `agentic-project-management`: Adopt its structured workflows for long-running projects.
+    - `claude-task-master`: Use as a reference for task tracking MCP servers.
+
+### Remote & Mobile Orchestration
+**Repo:** `references/orchestration/systemprompt-code-orchestrator`
+- **Goal:** Allow users to manage development from mobile devices.
+- **Integration:** Explore its remote management features for the Hub's dashboard.
+
+### Subagent Collections
+**Repos:** `references/agents/claude-code-subagents-collection`, `references/agents/codex-subagents-mcp`, `references/agents/Agent-MCP`
+- **Role:** Content Library.
+- **Action:** Import these subagent definitions into the Hub's `agents/` registry.

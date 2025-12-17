@@ -134,7 +134,16 @@ This document compiles the design decisions, planned features, and submodule int
     *   [ ] **Multi-Model Routing:** Intelligent routing logic adapted from `claude-code-router`.
     *   [ ] **Agent Methodology:** Adopt `BMAD-METHOD` patterns for agent structure.
 
-## 13. Agent Standards & Context Management
+## 13. Advanced Orchestration
+**Status:** Planned
+**Reference:** `docs/ECOSYSTEM_INTEGRATION.md`
+*   **Objective:** Coordinate complex multi-agent and multi-model workflows.
+*   **Planned Features:**
+    *   [ ] **Debate & Consensus:** Implement multi-model critique loops (Reference: `ultra-mcp`).
+    *   [ ] **Project Management:** Track long-running tasks and milestones (Reference: `agentic-project-management`).
+    *   [ ] **Mobile Orchestration:** Support remote management (Reference: `systemprompt-code-orchestrator`).
+
+## 14. Agent Standards & Context Management
 **Status:** Planned
 **Reference:** `docs/AGENT_STANDARDS_STRATEGY.md`
 *   **Objective:** Standardize agent behavior and context files across platforms.
