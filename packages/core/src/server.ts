@@ -10,6 +10,7 @@ import { ContextManager } from './managers/ContextManager.js';
 import { McpManager } from './managers/McpManager.js';
 import { ConfigGenerator } from './utils/ConfigGenerator.js';
 import { HookExecutor } from './utils/HookExecutor.js';
+import { McpInterface } from './interfaces/McpInterface.js';
 import { HookEvent } from './types.js';
 
 export class CoreService {
@@ -23,6 +24,7 @@ export class CoreService {
   private contextManager: ContextManager;
   private mcpManager: McpManager;
   private configGenerator: ConfigGenerator;
+  private mcpInterface: McpInterface;
 
   constructor(
     private rootDir: string
@@ -38,6 +40,7 @@ export class CoreService {
     this.contextManager = new ContextManager(path.join(rootDir, 'context'));
     this.mcpManager = new McpManager(path.join(rootDir, 'mcp-servers'));
     this.configGenerator = new ConfigGenerator(path.join(rootDir, 'mcp-servers'));
+    this.mcpInterface = new McpInterface();
     
     this.setupRoutes();
     this.setupSocket();
@@ -141,6 +144,10 @@ export class CoreService {
     await this.promptManager.start();
     await this.contextManager.start();
     
+    // Start MCP Interface (Stdio) - Optional based on env?
+    // For now we start it always, but be careful with logs.
+    // this.mcpInterface.start();
+
     try {
       await this.app.listen({ port, host: '0.0.0.0' });
       console.log(`Core Service running on port ${port}`);
