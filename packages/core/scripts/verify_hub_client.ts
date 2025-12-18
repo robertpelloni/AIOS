@@ -32,6 +32,22 @@ async function main() {
     const tools = await client.listTools();
     console.log('Tools:', JSON.stringify(tools, null, 2));
 
+    console.log('Searching tools for "echo"...');
+    const searchResult = await client.callTool({
+        name: 'search_tools',
+        arguments: { query: 'echo' }
+    });
+    console.log('Search Result:', JSON.stringify(searchResult, null, 2));
+
+    // Check if search returned echo tool
+    const searchContent = searchResult.content[0];
+    if (searchContent.type !== 'text' || !searchContent.text.includes('test-server__echo')) {
+        console.error('Search failed to find echo tool');
+        // Don't exit, try direct call
+    } else {
+        console.log('Search Verified!');
+    }
+
     const echoTool = tools.tools.find(t => t.name.includes('echo'));
     if (echoTool) {
         console.log('Calling echo tool...');
@@ -41,7 +57,7 @@ async function main() {
         });
         console.log('Result:', JSON.stringify(result, null, 2));
     } else {
-        console.error('Echo tool not found!');
+        console.error('Echo tool not found in list!');
         process.exit(1);
     }
 

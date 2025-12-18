@@ -54,7 +54,11 @@ export class HubServer {
             const { name, arguments: args } = request.params;
 
             if (name === 'search_tools') {
-                return { content: [{ type: 'text', text: 'Search not implemented yet' }] };
+                const query = String(args?.query || '');
+                // Ensure index is up to date
+                await this.proxyManager.listTools();
+                const results = this.proxyManager.searchTools(query);
+                return { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
             }
 
             if (name === 'run_code') {

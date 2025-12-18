@@ -1,12 +1,19 @@
 import { McpManager } from './McpManager.js';
 import { LogManager } from './LogManager.js';
+import { ToolSearchService } from '../services/ToolSearchService.js';
 import { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
 
 export class McpProxyManager {
+    private searchService = new ToolSearchService();
+
     constructor(
         private mcpManager: McpManager,
         private logManager: LogManager
     ) {}
+
+    searchTools(query: string): Tool[] {
+        return this.searchService.search(query);
+    }
 
     async listTools(): Promise<Tool[]> {
         const servers = this.mcpManager.getAllServers();
@@ -32,6 +39,10 @@ export class McpProxyManager {
                 console.error(`Failed to list tools for ${s.name}:`, e);
             }
         }
+
+        // Update search index
+        this.searchService.indexTools(allTools);
+
         return allTools;
     }
 
