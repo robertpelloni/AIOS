@@ -1,0 +1,61 @@
+import { McpManager } from './McpManager.js';
+import { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
+
+export class McpProxyManager {
+    constructor(private mcpManager: McpManager) {}
+
+    async listTools(): Promise<Tool[]> {
+        const servers = this.mcpManager.getAllServers();
+        const allTools: Tool[] = [];
+
+        for (const s of servers) {
+            if (s.status !== 'running') continue;
+            const client = this.mcpManager.getClient(s.name);
+            if (!client) continue;
+
+            try {
+                const result = await client.listTools();
+                if (result.tools) {
+                    // Namespace the tools: serverName__toolName
+                    const namespacedTools = result.tools.map(t => ({
+                        ...t,
+                        name: `${s.name}__${t.name}`,
+                        description: `[${s.name}] ${t.description || ''}`
+                    }));
+                    allTools.push(...namespacedTools);
+                }
+            } catch (e) {
+                console.error(`Failed to list tools for ${s.name}:`, e);
+            }
+        }
+        return allTools;
+    }
+
+    async callTool(name: string, args: any): Promise<CallToolResult> {
+        // Parse serverName__toolName
+        const [serverName, ...rest] = name.split('__');
+        const toolName = rest.join('__');
+
+        if (!serverName || !toolName) {
+            throw new Error(`Invalid namespaced tool name: ${name}`);
+        }
+
+        const client = this.mcpManager.getClient(serverName);
+        if (!client) {
+            throw new Error(`Server ${serverName} not connected`);
+        }
+
+        try {
+            const result = await client.callTool({
+                name: toolName,
+                arguments: args
+            });
+            return result as CallToolResult;
+        } catch (e: any) {
+            return {
+                content: [{ type: 'text', text: `Error: ${e.message}` }],
+                isError: true
+            };
+        }
+    }
+}
