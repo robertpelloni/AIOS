@@ -7,6 +7,7 @@ import { SkillManager } from './managers/SkillManager.js';
 import { PromptManager } from './managers/PromptManager.js';
 import { ContextManager } from './managers/ContextManager.js';
 import { McpManager } from './managers/McpManager.js';
+import { CommandManager } from './managers/CommandManager.js';
 import { ConfigGenerator } from './utils/ConfigGenerator.js';
 import { HookExecutor } from './utils/HookExecutor.js';
 import { McpInterface } from './interfaces/McpInterface.js';
@@ -17,6 +18,7 @@ import { LogManager } from './managers/LogManager.js';
 import { SecretManager } from './managers/SecretManager.js';
 import { HubServer } from './hub/HubServer.js';
 import { HookEvent } from './types.js';
+import { AgentExecutor } from './agents/AgentExecutor.js';
 
 export class CoreService {
   private app = Fastify({ logger: true });
@@ -27,6 +29,7 @@ export class CoreService {
   private skillManager: SkillManager;
   private promptManager: PromptManager;
   private contextManager: ContextManager;
+  private commandManager: CommandManager;
   private mcpManager: McpManager;
   private configGenerator: ConfigGenerator;
   private mcpInterface: McpInterface;
@@ -36,6 +39,7 @@ export class CoreService {
   private logManager: LogManager;
   private secretManager: SecretManager;
   private hubServer: HubServer;
+  private agentExecutor: AgentExecutor;
 
   constructor(
     private rootDir: string
@@ -54,6 +58,7 @@ export class CoreService {
     this.skillManager = new SkillManager(path.join(rootDir, 'skills'));
     this.promptManager = new PromptManager(path.join(rootDir, 'prompts'));
     this.contextManager = new ContextManager(path.join(rootDir, 'context'));
+    this.commandManager = new CommandManager(path.join(rootDir, 'commands'));
     this.mcpManager = new McpManager(path.join(rootDir, 'mcp-servers'));
     this.configGenerator = new ConfigGenerator(path.join(rootDir, 'mcp-servers'));
     this.clientManager = new ClientManager();
@@ -61,8 +66,18 @@ export class CoreService {
     this.logManager = new LogManager();
     this.secretManager = new SecretManager(rootDir);
     this.proxyManager = new McpProxyManager(this.mcpManager, this.logManager);
-    this.hubServer = new HubServer(this.proxyManager, this.codeExecutionManager);
+
+    // Inject managers into HubServer
+    this.hubServer = new HubServer(
+        this.proxyManager,
+        this.codeExecutionManager,
+        this.agentManager,
+        this.skillManager,
+        this.promptManager
+    );
+
     this.mcpInterface = new McpInterface(this.hubServer);
+    this.agentExecutor = new AgentExecutor(this.proxyManager);
     
     this.setupRoutes();
     this.setupSocket();
@@ -105,6 +120,16 @@ export class CoreService {
             return reply.code(500).send({ error: err.message });
         }
     });
+
+    this.app.post('/api/agents/run', async (request: any, reply) => {
+        const { agentName, task } = request.body;
+        const agents = this.agentManager.getAgents();
+        const agent = agents.find(a => a.name === agentName);
+        if (!agent) return reply.code(404).send({ error: "Agent not found" });
+
+        const result = await this.agentExecutor.run(agent, task);
+        return { result };
+    });
     
     this.app.get('/api/state', async () => ({
         agents: this.agentManager.getAgents(),
@@ -112,7 +137,8 @@ export class CoreService {
         hooks: this.hookManager.getHooks(),
         prompts: this.promptManager.getPrompts(),
         context: this.contextManager.getContextFiles(),
-        mcpServers: this.mcpManager.getAllServers()
+        mcpServers: this.mcpManager.getAllServers(),
+        commands: this.commandManager.getCommands()
     }));
 
     this.app.get('/api/config/mcp/:format', async (request: any, reply) => {
@@ -197,7 +223,8 @@ export class CoreService {
         hooks: this.hookManager.getHooks(),
         prompts: this.promptManager.getPrompts(),
         context: this.contextManager.getContextFiles(),
-        mcpServers: this.mcpManager.getAllServers()
+        mcpServers: this.mcpManager.getAllServers(),
+        commands: this.commandManager.getCommands()
       });
 
       socket.on('hook_event', (event: HookEvent) => {
@@ -212,6 +239,7 @@ export class CoreService {
     this.hookManager.on('loaded', (hooks) => this.io.emit('hooks_updated', hooks));
     this.promptManager.on('updated', (prompts) => this.io.emit('prompts_updated', prompts));
     this.contextManager.on('updated', (context) => this.io.emit('context_updated', context));
+    this.commandManager.on('updated', (commands) => this.io.emit('commands_updated', commands));
     this.mcpManager.on('updated', (servers) => this.io.emit('mcp_updated', servers));
   }
 
@@ -238,6 +266,7 @@ export class CoreService {
     await this.hookManager.loadHooks();
     await this.promptManager.start();
     await this.contextManager.start();
+    await this.commandManager.start();
     await this.proxyManager.start();
 
     // Start MCP Interface (Stdio) - Optional based on env?
