@@ -1,18 +1,24 @@
+import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Layout } from './components/layout/Layout';
-import { Home } from './pages/Home';
-import { Billing, Tools, Cloud, Jules } from './pages/Placeholders';
+import { Layout } from './components/Layout';
+import { Dashboard } from './pages/Dashboard';
+import { Secrets } from './pages/Secrets';
+import { McpServers } from './pages/McpServers';
+import { Agents } from './pages/Agents';
+import { Hooks } from './pages/Hooks';
+import { Inspector } from './pages/Inspector';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="billing" element={<Billing />} />
-          <Route path="tools" element={<Tools />} />
-          <Route path="cloud" element={<Cloud />} />
-          <Route path="jules" element={<Jules />} />
+          <Route index element={<Dashboard />} />
+          <Route path="secrets" element={<Secrets />} />
+          <Route path="mcp" element={<McpServers />} />
+          <Route path="agents" element={<Agents />} />
+          <Route path="hooks" element={<Hooks />} />
+          <Route path="inspector" element={<Inspector />} />
         </Route>
       </Routes>
     </BrowserRouter>

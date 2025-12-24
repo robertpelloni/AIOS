@@ -1,7 +1,6 @@
 import Fastify from 'fastify';
-import { Server as SocketIOServer } from 'socket.io';
+import { Socket, Server as SocketIOServer } from 'socket.io';
 import path from 'path';
-import fs from 'fs';
 import { HookManager } from './managers/HookManager.js';
 import { AgentManager } from './managers/AgentManager.js';
 import { SkillManager } from './managers/SkillManager.js';
@@ -15,6 +14,7 @@ import { ClientManager } from './managers/ClientManager.js';
 import { CodeExecutionManager } from './managers/CodeExecutionManager.js';
 import { McpProxyManager } from './managers/McpProxyManager.js';
 import { LogManager } from './managers/LogManager.js';
+import { SecretManager } from './managers/SecretManager.js';
 import { HubServer } from './hub/HubServer.js';
 import { HookEvent } from './types.js';
 
@@ -34,6 +34,7 @@ export class CoreService {
   private codeExecutionManager: CodeExecutionManager;
   private proxyManager: McpProxyManager;
   private logManager: LogManager;
+  private secretManager: SecretManager;
   private hubServer: HubServer;
 
   constructor(
@@ -58,6 +59,7 @@ export class CoreService {
     this.clientManager = new ClientManager();
     this.codeExecutionManager = new CodeExecutionManager();
     this.logManager = new LogManager();
+    this.secretManager = new SecretManager(rootDir);
     this.proxyManager = new McpProxyManager(this.mcpManager, this.logManager);
     this.hubServer = new HubServer(this.proxyManager, this.codeExecutionManager);
     this.mcpInterface = new McpInterface(this.hubServer);
@@ -95,7 +97,8 @@ export class CoreService {
         try {
             const result = await this.codeExecutionManager.execute(code, async (name, args) => {
                 console.log(`Tool call request: ${name}`, args);
-                return "Tool execution not yet implemented via API";
+                // We should route this through proxyManager really, but for now:
+                return await this.proxyManager.callTool(name, args);
             });
             return { result };
         } catch (err: any) {
@@ -113,9 +116,9 @@ export class CoreService {
     }));
 
     this.app.get('/api/config/mcp/:format', async (request: any, reply) => {
-        const format = request.params.format;
+        const { format } = request.params as any;
         if (['json', 'toml', 'xml'].includes(format)) {
-            return { config: await this.configGenerator.generateConfig(format) };
+            return this.configGenerator.generateConfig(format as any);
         }
         reply.code(400).send({ error: 'Invalid format' });
     });
@@ -132,6 +135,11 @@ export class CoreService {
         }
 
         try {
+            // Inject Secrets
+            const secrets = this.secretManager.getEnvVars();
+            const env = { ...process.env, ...serverConfig.env, ...secrets };
+            serverConfig.env = env;
+
             await this.mcpManager.startServerSimple(name, serverConfig);
             return { status: 'started' };
         } catch (err: any) {
@@ -143,6 +151,26 @@ export class CoreService {
         const { name } = request.body;
         await this.mcpManager.stopServer(name);
         return { status: 'stopped' };
+    });
+
+    // Secret Management Routes
+    this.app.get('/api/secrets', async () => {
+        return { secrets: this.secretManager.getAllSecrets() };
+    });
+
+    this.app.post('/api/secrets', async (request: any, reply) => {
+        const { key, value } = request.body;
+        if (!key || !value) {
+            return reply.code(400).send({ error: 'Missing key or value' });
+        }
+        this.secretManager.setSecret(key, value);
+        return { status: 'created' };
+    });
+
+    this.app.delete('/api/secrets/:key', async (request: any, reply) => {
+        const { key } = request.params;
+        this.secretManager.deleteSecret(key);
+        return { status: 'deleted' };
     });
 
     // Hub Server Routes (SSE)
@@ -160,8 +188,8 @@ export class CoreService {
   }
 
   private setupSocket() {
-    this.io.on('connection', (socket) => {
-      console.log('Client connected:', socket.id);
+    this.io.on('connection', (socket: Socket) => {
+      console.log('Client connected', socket.id);
 
       socket.emit('state', {
         agents: this.agentManager.getAgents(),
@@ -173,9 +201,8 @@ export class CoreService {
       });
 
       socket.on('hook_event', (event: HookEvent) => {
-          console.log('Received Hook Event:', event.type);
-          this.io.emit('hook_log', event);
-          this.processHook(event);
+        console.log('Received hook event:', event);
+        this.processHook(event);
       });
     });
 
@@ -205,10 +232,10 @@ export class CoreService {
       }
   }
 
-  async start(port: number = 3000) {
-    await this.hookManager.start();
-    await this.agentManager.start();
-    await this.skillManager.start();
+  public async start(port = 3000) {
+    await this.agentManager.loadAgents();
+    await this.skillManager.loadSkills();
+    await this.hookManager.loadHooks();
     await this.promptManager.start();
     await this.contextManager.start();
     
@@ -216,6 +243,21 @@ export class CoreService {
     if (process.env.MCP_STDIO_ENABLED === 'true') {
         console.error('[Core] Starting MCP Stdio Interface...');
         this.mcpInterface.start();
+    }
+
+    // Start claude-mem integration
+    try {
+        const wrapperPath = path.join(this.rootDir, 'packages/core/scripts/stdio-wrapper.js');
+        const scriptPath = path.join(this.rootDir, 'submodules/claude-mem/plugin/scripts/mcp-server.cjs');
+
+        console.error('[Core] Starting claude-mem...');
+        await this.mcpManager.startServerSimple('claude-mem', {
+            command: 'node',
+            args: [wrapperPath, 'node', scriptPath],
+            env: { ...process.env, CLAUDE_MEM_LOG_LEVEL: 'ERROR' }
+        });
+    } catch (error) {
+        console.error('[Core] Failed to start claude-mem:', error);
     }
 
     try {

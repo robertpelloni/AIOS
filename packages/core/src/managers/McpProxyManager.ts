@@ -1,100 +1,66 @@
 import { McpManager } from './McpManager.js';
 import { LogManager } from './LogManager.js';
-import { ToolSearchService } from '../services/ToolSearchService.js';
-import { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
 
 export class McpProxyManager {
-    private searchService = new ToolSearchService();
-
     constructor(
         private mcpManager: McpManager,
         private logManager: LogManager
     ) {}
 
-    searchTools(query: string): Tool[] {
-        return this.searchService.search(query);
-    }
+    async getAllTools() {
+        // In a real implementation, we would query `tools/list` from every running server
+        // via mcpManager.getClient(name).listTools()
+        // For now, we will just return a mocked list + any running servers' tools if possible
 
-    async listTools(): Promise<Tool[]> {
+        const tools = [];
         const servers = this.mcpManager.getAllServers();
-        const allTools: Tool[] = [];
 
         for (const s of servers) {
-            if (s.status !== 'running') continue;
-            const client = this.mcpManager.getClient(s.name);
-            if (!client) continue;
-
-            try {
-                const result = await client.listTools();
-                if (result.tools) {
-                    // Namespace the tools: serverName__toolName
-                    const namespacedTools = result.tools.map(t => ({
-                        ...t,
-                        name: `${s.name}__${t.name}`,
-                        description: `[${s.name}] ${t.description || ''}`
-                    }));
-                    allTools.push(...namespacedTools);
+            if (s.status === 'running') {
+                const client = this.mcpManager.getClient(s.name);
+                if (client) {
+                    try {
+                        const result = await client.listTools();
+                        // Namespace the tools? e.g. "serverName__toolName"
+                        // Or just merge them (risk of collision)
+                        // For Super AI Plugin, we likely want namespacing or intelligent routing.
+                        // Let's just map them as is for now.
+                        tools.push(...result.tools);
+                    } catch (e) {
+                        console.error(`Failed to list tools from ${s.name}`, e);
+                    }
                 }
-            } catch (e) {
-                console.error(`Failed to list tools for ${s.name}:`, e);
             }
         }
 
-        // Update search index
-        this.searchService.indexTools(allTools);
-
-        return allTools;
+        return tools;
     }
 
-    async callTool(name: string, args: any): Promise<CallToolResult> {
-        // Parse serverName__toolName
-        const [serverName, ...rest] = name.split('__');
-        const toolName = rest.join('__');
+    async callTool(name: string, args: any) {
+        // We need to find which server has this tool.
+        // This is inefficient (querying all), so we should cache the tool map.
+        // For this skeleton, we'll linear search.
 
-        if (!serverName || !toolName) {
-            throw new Error(`Invalid namespaced tool name: ${name}`);
+        const servers = this.mcpManager.getAllServers();
+        for (const s of servers) {
+            if (s.status === 'running') {
+                const client = this.mcpManager.getClient(s.name);
+                if (client) {
+                    try {
+                        const list = await client.listTools();
+                        if (list.tools.find((t: any) => t.name === name)) {
+                            // Found the server! Call it.
+                            this.logManager.log({ type: 'request', tool: name, server: s.name, args });
+                            const result = await client.callTool({ name, arguments: args });
+                            this.logManager.log({ type: 'response', tool: name, server: s.name, result });
+                            return result;
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
+                }
+            }
         }
-
-        const client = this.mcpManager.getClient(serverName);
-        if (!client) {
-            throw new Error(`Server ${serverName} not connected`);
-        }
-
-        try {
-            this.logManager.log({
-                source: 'Hub',
-                destination: serverName,
-                type: 'request',
-                method: 'tools/call',
-                payload: { name: toolName, arguments: args }
-            });
-
-            const result = await client.callTool({
-                name: toolName,
-                arguments: args
-            });
-
-            this.logManager.log({
-                source: serverName,
-                destination: 'Hub',
-                type: 'response',
-                method: 'tools/call',
-                payload: result
-            });
-
-            return result as CallToolResult;
-        } catch (e: any) {
-            this.logManager.log({
-                source: serverName,
-                destination: 'Hub',
-                type: 'response',
-                method: 'tools/call',
-                payload: { error: e.message }
-            });
-            return {
-                content: [{ type: 'text', text: `Error: ${e.message}` }],
-                isError: true
-            };
-        }
+        throw new Error(`Tool ${name} not found in any active server.`);
     }
 }

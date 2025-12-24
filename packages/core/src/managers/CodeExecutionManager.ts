@@ -28,7 +28,8 @@ export class CodeExecutionManager {
         try {
             // vm.runInContext returns the result of the last expression
             // which is the promise from the IIFE
-            const resultPromise = vm.runInContext(wrappedCode, context);
+            // Added timeout for security
+            const resultPromise = vm.runInContext(wrappedCode, context, { timeout: 5000 });
 
             let result;
             if (resultPromise && typeof resultPromise.then === 'function') {

@@ -1,123 +1,104 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { EventEmitter } from 'events';
 import { McpProxyManager } from '../managers/McpProxyManager.js';
 import { CodeExecutionManager } from '../managers/CodeExecutionManager.js';
-import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 
-export class HubServer {
-    private server: Server;
-    private transports = new Map<string, SSEServerTransport>();
-
+/**
+ * HubServer acts as the central brain.
+ * It aggregates tools from all connected MCP servers (via ProxyManager)
+ * and exposes them to clients (Claude, VSCode) via SSE or Stdio.
+ */
+export class HubServer extends EventEmitter {
     constructor(
         private proxyManager: McpProxyManager,
         private codeManager: CodeExecutionManager
     ) {
-        this.server = new Server({
-            name: "SuperAI-Hub",
-            version: "1.0.0"
-        }, {
-            capabilities: {
-                tools: {}
-            }
-        });
-
-        this.setupHandlers();
+        super();
     }
 
-    private setupHandlers() {
-        this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-            const tools = await this.proxyManager.listTools();
-            // Add meta tools
-            const metaTools = [
-                {
-                    name: 'search_tools',
-                    description: 'Search available tools',
-                    inputSchema: { type: 'object', properties: { query: { type: 'string' } } }
-                },
-                {
-                    name: "run_code",
-                    description: "Execute TypeScript code in a secure sandbox.",
-                    inputSchema: {
-                        type: "object",
-                        properties: {
-                            code: { type: "string", description: "The code to execute" }
-                        },
-                        required: ["code"]
-                    }
-                }
-            ];
-            return { tools: [...metaTools, ...tools] };
-        });
+    /**
+     * Handles an incoming JSON-RPC message from a Client (e.g. Claude Desktop)
+     * and routes it to the appropriate downstream MCP server or internal handler.
+     */
+    async handleMessage(sessionId: string, message: any, replyStream?: any) {
+        // 1. Log incoming traffic
+        // this.emit('traffic', { direction: 'in', message });
 
-        this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-            const { name, arguments: args } = request.params;
+        if (message.method === 'tools/list') {
+            // Aggregate tools from all running servers
+            const tools = await this.proxyManager.getAllTools();
+            return {
+                jsonrpc: "2.0",
+                id: message.id,
+                result: { tools }
+            };
+        }
 
-            if (name === 'search_tools') {
-                const query = String(args?.query || '');
-                // Ensure index is up to date
-                await this.proxyManager.listTools();
-                const results = this.proxyManager.searchTools(query);
-                return { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
-            }
+        if (message.method === 'tools/call') {
+            const { name, arguments: args } = message.params;
 
-            if (name === 'run_code') {
-                const code = String(args?.code);
-                const result = await this.codeManager.execute(code, async (toolName, toolArgs) => {
-                    // Sandbox calling back into Hub tools
-                    // We route this back through the ProxyManager
-                    const res = await this.proxyManager.callTool(toolName, toolArgs);
-                    // Extract text content for the sandbox
-                    // This is a simplification; handling errors/images needs more logic
-                    const firstItem = res.content?.[0];
-                    const errorMessage = (firstItem && firstItem.type === 'text') ? firstItem.text : "Tool Error";
-
-                    if (res.isError) throw new Error(errorMessage);
-
-                    return (firstItem && firstItem.type === 'text') ? firstItem.text : JSON.stringify(res.content);
+            // Check if it's a code execution request
+            if (name === 'execute_code') {
+                const result = await this.codeManager.execute(args.code, async (toolName: string, toolArgs: any) => {
+                    return this.proxyManager.callTool(toolName, toolArgs);
                 });
-                return { content: [{ type: 'text', text: result }] };
+                return {
+                    jsonrpc: "2.0",
+                    id: message.id,
+                    result: { content: [{ type: "text", text: result }] }
+                };
             }
 
-            return await this.proxyManager.callTool(name, args);
-        });
-    }
+            // Otherwise route to the correct MCP server
+            try {
+                const result = await this.proxyManager.callTool(name, args);
+                return {
+                    jsonrpc: "2.0",
+                    id: message.id,
+                    result
+                };
+            } catch (err: any) {
+                return {
+                    jsonrpc: "2.0",
+                    id: message.id,
+                    error: { code: -32603, message: err.message }
+                };
+            }
+        }
 
-    async connect(transport: Transport) {
-        await this.server.connect(transport);
+        // Default: Method not found
+        return {
+            jsonrpc: "2.0",
+            id: message.id,
+            error: { code: -32601, message: "Method not found" }
+        };
     }
 
     async handleSSE(req: any, res: any) {
-        const transport = new SSEServerTransport('/api/hub/messages', res);
-        this.transports.set(transport.sessionId, transport);
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*'
+        });
 
-        transport.onclose = () => {
-            this.transports.delete(transport.sessionId);
-        };
+        const sessionId = Date.now().toString(); // Simple session ID
+        console.log(`[Hub] SSE Client Connected: ${sessionId}`);
 
-        await this.server.connect(transport);
-    }
+        // Send initial endpoint URL for the POST transport
+        const msg = JSON.stringify({
+            event: 'endpoint',
+            data: `/api/hub/messages?sessionId=${sessionId}`
+        });
+        res.write(`event: endpoint\ndata: ${msg}\n\n`);
 
-    async handleMessage(sessionId: string, message: any, res: any) {
-        const transport = this.transports.get(sessionId);
-        if (!transport) {
-            res.statusCode = 404;
-            res.end('Session not found');
-            return;
-        }
-        // Since Fastify already parsed the body, we can manually inject the message
-        // However, SSEServerTransport doesn't expose handleMessage in the public type defs easily in all versions?
-        // It extends ServerTransport which usually expects handleMessage.
-        // Let's check if we can call it.
+        // Keep alive
+        const interval = setInterval(() => {
+            res.write(': keepalive\n\n');
+        }, 15000);
 
-        try {
-            await transport.handleMessage(message);
-            res.statusCode = 200;
-            res.end('ok');
-        } catch (e: any) {
-            console.error('Error handling message:', e);
-            res.statusCode = 500;
-            res.end(e.message);
-        }
+        req.on('close', () => {
+            console.log(`[Hub] SSE Client Disconnected: ${sessionId}`);
+            clearInterval(interval);
+        });
     }
 }
