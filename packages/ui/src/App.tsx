@@ -9,6 +9,7 @@ import { Hooks } from './pages/Hooks';
 import { Inspector } from './pages/Inspector';
 import { Prompts } from './pages/Prompts';
 import { Context } from './pages/Context';
+import { Marketplace } from './pages/Marketplace';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
+          <Route path="marketplace" element={<Marketplace />} />
           <Route path="secrets" element={<Secrets />} />
           <Route path="mcp" element={<McpServers />} />
           <Route path="agents" element={<Agents />} />

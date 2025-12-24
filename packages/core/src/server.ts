@@ -21,6 +21,8 @@ import { HookEvent } from './types.js';
 import { AgentExecutor } from './agents/AgentExecutor.js';
 import { MemoryManager } from './managers/MemoryManager.js';
 import { SchedulerManager } from './managers/SchedulerManager.js';
+import { MarketplaceManager } from './managers/MarketplaceManager.js';
+import { toToon, FormatTranslatorTool } from './utils/toon.js';
 
 export class CoreService {
   private app = Fastify({ logger: true });
@@ -44,6 +46,7 @@ export class CoreService {
   private agentExecutor: AgentExecutor;
   private memoryManager: MemoryManager;
   private schedulerManager: SchedulerManager;
+  private marketplaceManager: MarketplaceManager;
 
   constructor(
     private rootDir: string
@@ -71,6 +74,7 @@ export class CoreService {
     this.secretManager = new SecretManager(rootDir);
     this.proxyManager = new McpProxyManager(this.mcpManager, this.logManager);
     this.memoryManager = new MemoryManager(path.join(rootDir, 'data'));
+    this.marketplaceManager = new MarketplaceManager(rootDir);
 
     // Inject managers into HubServer
     this.hubServer = new HubServer(
@@ -146,7 +150,8 @@ export class CoreService {
         context: this.contextManager.getContextFiles(),
         mcpServers: this.mcpManager.getAllServers(),
         commands: this.commandManager.getCommands(),
-        scheduledTasks: this.schedulerManager.getTasks()
+        scheduledTasks: this.schedulerManager.getTasks(),
+        marketplace: this.marketplaceManager.getPackages()
     }));
 
     this.app.get('/api/config/mcp/:format', async (request: any, reply) => {
@@ -207,6 +212,22 @@ export class CoreService {
         return { status: 'deleted' };
     });
 
+    // Marketplace Routes
+    this.app.post('/api/marketplace/refresh', async () => {
+        await this.marketplaceManager.refresh();
+        return { status: 'ok' };
+    });
+
+    this.app.post('/api/marketplace/install', async (request: any, reply) => {
+        const { name } = request.body;
+        try {
+            const result = await this.marketplaceManager.installPackage(name);
+            return { result };
+        } catch (e: any) {
+            return reply.code(500).send({ error: e.message });
+        }
+    });
+
     // Hub Server Routes (SSE)
     this.app.get('/api/hub/sse', async (request: any, reply) => {
         await this.hubServer.handleSSE(request.raw, reply.raw);
@@ -233,7 +254,8 @@ export class CoreService {
         context: this.contextManager.getContextFiles(),
         mcpServers: this.mcpManager.getAllServers(),
         commands: this.commandManager.getCommands(),
-        scheduledTasks: this.schedulerManager.getTasks()
+        scheduledTasks: this.schedulerManager.getTasks(),
+        marketplace: this.marketplaceManager.getPackages()
       });
 
       socket.on('hook_event', (event: HookEvent) => {
@@ -250,6 +272,7 @@ export class CoreService {
     this.contextManager.on('updated', (context) => this.io.emit('context_updated', context));
     this.commandManager.on('updated', (commands) => this.io.emit('commands_updated', commands));
     this.mcpManager.on('updated', (servers) => this.io.emit('mcp_updated', servers));
+    this.marketplaceManager.on('updated', (pkgs) => this.io.emit('marketplace_updated', pkgs));
   }
 
   private async processHook(event: HookEvent) {
@@ -278,6 +301,7 @@ export class CoreService {
     await this.commandManager.start();
     await this.proxyManager.start();
     this.schedulerManager.start();
+    await this.marketplaceManager.refresh();
 
     // Start MCP Interface (Stdio) - Optional based on env?
     if (process.env.MCP_STDIO_ENABLED === 'true') {
@@ -293,6 +317,21 @@ export class CoreService {
              if (tool.name === 'recall_recent') return this.memoryManager.recall(args);
              return "Unknown tool";
         });
+    });
+
+    // Register FormatTranslator
+    this.proxyManager.registerInternalTool(FormatTranslatorTool, async (args: any) => {
+        const json = typeof args.data === 'string' ? JSON.parse(args.data) : args.data;
+        return toToon(json);
+    });
+
+    // Register Marketplace Install Tool
+    this.proxyManager.registerInternalTool({
+        name: "install_package",
+        description: "Install an Agent or Skill from the Marketplace.",
+        inputSchema: { type: "object", properties: { name: { type: "string" } }, required: ["name"] }
+    }, async (args: any) => {
+        return await this.marketplaceManager.installPackage(args.name);
     });
 
     try {
