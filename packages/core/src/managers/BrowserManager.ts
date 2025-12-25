@@ -34,6 +34,17 @@ export class BrowserManager extends EventEmitter {
                     },
                     required: ["url"]
                 }
+            },
+            {
+                name: "inject_context",
+                description: "Inject (type/paste) text into the active input field of the active browser tab.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        text: { type: "string" }
+                    },
+                    required: ["text"]
+                }
             }
         ];
     }
@@ -58,5 +69,19 @@ export class BrowserManager extends EventEmitter {
 
         socket.emit('browser:navigate', { url });
         return `Navigating to ${url}`;
+    }
+
+    async injectContext(text: string) {
+        const socket = this.clients.values().next().value;
+        if (!socket) throw new Error("No browser connected.");
+
+        return new Promise((resolve, reject) => {
+            const t = setTimeout(() => reject(new Error("Browser request timed out")), 5000);
+
+            socket.emit('browser:inject_text', { text, requestId: Date.now() }, (response: any) => {
+                clearTimeout(t);
+                resolve(response);
+            });
+        });
     }
 }

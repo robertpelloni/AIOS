@@ -1,48 +1,71 @@
-import chokidar from 'chokidar';
-import fs from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
 import { EventEmitter } from 'events';
 
+export interface Prompt {
+    name: string;
+    content: string;
+    description: string;
+}
+
 export class PromptManager extends EventEmitter {
-  private prompts: Map<string, string> = new Map();
-  private watcher: chokidar.FSWatcher | null = null;
-  
-  constructor(private promptsDir: string) {
-    super();
-  }
+    private watcher: fs.FSWatcher | null = null;
+    private prompts: Map<string, Prompt> = new Map();
 
-  async start() {
-    this.watcher = chokidar.watch(this.promptsDir, {
-      ignored: /(^|[\/\\])\../,
-      persistent: true
-    });
-
-    this.watcher.on('add', this.loadPrompt.bind(this));
-    this.watcher.on('change', this.loadPrompt.bind(this));
-    this.watcher.on('unlink', this.removePrompt.bind(this));
-    
-    console.log(`[PromptManager] Watching ${this.promptsDir}`);
-  }
-
-  private async loadPrompt(filepath: string) {
-    try {
-      const content = await fs.readFile(filepath, 'utf-8');
-      const filename = path.basename(filepath);
-      this.prompts.set(filename, content);
-      console.log(`[PromptManager] Loaded prompt: ${filename}`);
-      this.emit('updated', this.getPrompts());
-    } catch (err) {
-      console.error(`[PromptManager] Error loading prompt ${filepath}:`, err);
+    constructor(private promptsDir: string) {
+        super();
     }
-  }
 
-  private removePrompt(filepath: string) {
-      const filename = path.basename(filepath);
-      this.prompts.delete(filename);
-      this.emit('updated', this.getPrompts());
-  }
+    async start() {
+        if (!fs.existsSync(this.promptsDir)) {
+            fs.mkdirSync(this.promptsDir, { recursive: true });
+        }
 
-  getPrompts() {
-    return Array.from(this.prompts.entries()).map(([name, content]) => ({ name, content }));
-  }
+        this.watcher = fs.watch(this.promptsDir, (eventType, filename) => {
+            if (filename) {
+                this.loadPrompt(path.join(this.promptsDir, filename));
+            }
+        });
+
+        this.loadAll();
+    }
+
+    private loadAll() {
+        const files = fs.readdirSync(this.promptsDir);
+        for (const file of files) {
+            this.loadPrompt(path.join(this.promptsDir, file));
+        }
+    }
+
+    private loadPrompt(filepath: string) {
+        if (!fs.existsSync(filepath)) return;
+        try {
+            const content = fs.readFileSync(filepath, 'utf-8');
+            const name = path.basename(filepath, path.extname(filepath));
+            this.prompts.set(name, {
+                name,
+                content,
+                description: `Prompt: ${name}`
+            });
+            this.emit('updated', this.getPrompts());
+        } catch (e) {
+            console.error(`Failed to load prompt ${filepath}`, e);
+        }
+    }
+
+    getPrompts(): Prompt[] {
+        return Array.from(this.prompts.values());
+    }
+
+    getPromptContent(name: string, variables: Record<string, string> = {}): string | null {
+        const prompt = this.prompts.get(name);
+        if (!prompt) return null;
+
+        let content = prompt.content;
+        for (const [key, value] of Object.entries(variables)) {
+            // Replace {{key}}
+            content = content.replace(new RegExp(`{{${key}}}`, 'g'), value);
+        }
+        return content;
+    }
 }

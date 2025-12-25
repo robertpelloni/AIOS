@@ -477,6 +477,7 @@ export class CoreService {
         this.proxyManager.registerInternalTool(tool, async (args: any) => {
              if (tool.name === 'read_active_tab') return this.browserManager.readActiveTab();
              if (tool.name === 'browser_navigate') return this.browserManager.navigate(args.url);
+             if (tool.name === 'inject_context') return this.browserManager.injectContext(args.text);
              return "Unknown tool";
         });
     });

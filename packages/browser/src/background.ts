@@ -34,8 +34,19 @@ socket.on('browser:read_page', async (data, callback) => {
     if (tab && tab.id) {
         chrome.tabs.sendMessage(tab.id, { action: 'getPageContent' }, (response) => {
             if (callback) callback(response);
-            // Also emit back to server as event if callback not supported by socket version
             socket.emit('browser:page_content', { ...response, requestId: data.requestId });
+        });
+    } else {
+        if (callback) callback({ error: 'No active tab' });
+    }
+});
+
+// Handle 'inject_text' requests from Hub
+socket.on('browser:inject_text', async (data, callback) => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab && tab.id) {
+        chrome.tabs.sendMessage(tab.id, { action: 'injectText', text: data.text }, (response) => {
+            if (callback) callback(response);
         });
     } else {
         if (callback) callback({ error: 'No active tab' });
