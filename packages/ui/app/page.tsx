@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Activity, Cpu, CheckCircle, Globe } from 'lucide-react';
+import { Activity, Cpu, CheckCircle, Globe, Terminal as TerminalIcon, Puzzle, Code, Monitor, LayoutDashboard, Bot, ShieldCheck } from 'lucide-react';
 import { io } from 'socket.io-client';
+import { IntegratedTerminal } from '@/components/IntegratedTerminal';
+import Link from 'next/link';
 
 const socket = io('http://localhost:3000');
 
@@ -35,6 +37,12 @@ export default function Dashboard() {
   });
 
   const [metaMcpConnected, setMetaMcpConnected] = useState<boolean | null>(null);
+  const [activeComponents, setActiveComponents] = useState({
+    plugin: true,
+    browserExtension: false,
+    opencode: false,
+    terminal: true
+  });
 
   useEffect(() => {
     socket.on('state', (data: any) => {
@@ -52,6 +60,14 @@ export default function Dashboard() {
       setStats(prev => ({ ...prev, mcpServers: servers.length, runningServers: running }));
     });
 
+    // Mock component status check
+    // In a real app, these would be checked via API or socket events
+    const checkComponents = async () => {
+        // Example: Check if browser extension is connected via a specific socket event or API
+        // setMetaMcpConnected(true); // Mock
+    };
+    checkComponents();
+
     return () => {
       socket.off('state');
       socket.off('mcp_updated');
@@ -59,14 +75,46 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <header className="mb-10">
+    <div className="max-w-6xl mx-auto space-y-8">
+      <header>
         <h1 className="text-4xl font-bold mb-2">System Overview</h1>
         <p className="text-gray-400">Real-time monitoring of your Super AI Plugin ecosystem.</p>
       </header>
 
+      {/* Component Status Indicators */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className={`p-4 rounded-lg border ${activeComponents.plugin ? 'bg-green-900/20 border-green-800' : 'bg-gray-800 border-gray-700'} flex items-center gap-3`}>
+              <Puzzle className={activeComponents.plugin ? 'text-green-400' : 'text-gray-500'} />
+              <div>
+                  <div className="font-semibold">Plugin Mode</div>
+                  <div className="text-xs text-gray-400">{activeComponents.plugin ? 'Active' : 'Inactive'}</div>
+              </div>
+          </div>
+          <div className={`p-4 rounded-lg border ${activeComponents.browserExtension ? 'bg-green-900/20 border-green-800' : 'bg-gray-800 border-gray-700'} flex items-center gap-3`}>
+              <Globe className={activeComponents.browserExtension ? 'text-green-400' : 'text-gray-500'} />
+              <div>
+                  <div className="font-semibold">Browser Ext</div>
+                  <div className="text-xs text-gray-400">{activeComponents.browserExtension ? 'Connected' : 'Not Detected'}</div>
+              </div>
+          </div>
+          <div className={`p-4 rounded-lg border ${activeComponents.opencode ? 'bg-green-900/20 border-green-800' : 'bg-gray-800 border-gray-700'} flex items-center gap-3`}>
+              <Code className={activeComponents.opencode ? 'text-green-400' : 'text-gray-500'} />
+              <div>
+                  <div className="font-semibold">OpenCode</div>
+                  <div className="text-xs text-gray-400">{activeComponents.opencode ? 'Linked' : 'Not Linked'}</div>
+              </div>
+          </div>
+          <div className={`p-4 rounded-lg border ${activeComponents.terminal ? 'bg-green-900/20 border-green-800' : 'bg-gray-800 border-gray-700'} flex items-center gap-3`}>
+              <TerminalIcon className={activeComponents.terminal ? 'text-green-400' : 'text-gray-500'} />
+              <div>
+                  <div className="font-semibold">Terminal</div>
+                  <div className="text-xs text-gray-400">{activeComponents.terminal ? 'Ready' : 'Offline'}</div>
+              </div>
+          </div>
+      </div>
+
       {/* Health Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg flex items-center justify-between">
           <div>
             <div className="text-gray-400 text-sm mb-1">Core Service</div>
@@ -108,46 +156,93 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-          <h2 className="text-lg font-semibold mb-4 border-b border-gray-700 pb-2">Quick Actions</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <button className="bg-gray-700 hover:bg-gray-600 p-3 rounded text-left transition-colors">
-              <div className="font-bold">Add API Key</div>
-              <div className="text-xs text-gray-400">Configure new tools</div>
-            </button>
-            <button className="bg-gray-700 hover:bg-gray-600 p-3 rounded text-left transition-colors">
-              <div className="font-bold">Install to Clients</div>
-              <div className="text-xs text-gray-400">Auto-configure Claude/VSCode</div>
-            </button>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Terminal Section */}
+          <div className="lg:col-span-2 bg-gray-800 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-[400px]">
+              <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-900/50">
+                  <h2 className="font-semibold flex items-center gap-2">
+                      <TerminalIcon size={18} /> System Terminal
+                  </h2>
+                  <div className="text-xs text-gray-500">Connected to Localhost</div>
+              </div>
+              <div className="flex-1 relative">
+                  <IntegratedTerminal className="absolute inset-0" />
+              </div>
           </div>
-        </div>
 
-        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-          <h2 className="text-lg font-semibold mb-4 border-b border-gray-700 pb-2">System Resources</h2>
-          {/* Mock Chart */}
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-400">Memory Usage</span>
-                <span className="text-gray-200">1.2 GB / 16 GB</span>
-              </div>
-              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 w-[15%]"></div>
-              </div>
+          {/* Quick Actions & Resources */}
+          <div className="space-y-6">
+            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+            <h2 className="text-lg font-semibold mb-4 border-b border-gray-700 pb-2">Jules Control Tower</h2>
+            <div className="grid grid-cols-1 gap-4">
+                <Link href="/jules" className="bg-gray-700 hover:bg-gray-600 p-3 rounded text-left transition-colors flex items-center gap-3">
+                    <div className="bg-indigo-500/20 p-2 rounded text-indigo-400"><LayoutDashboard size={18} /></div>
+                    <div>
+                        <div className="font-bold">Jules Dashboard</div>
+                        <div className="text-xs text-gray-400">Manage sessions & tasks</div>
+                    </div>
+                </Link>
+                <Link href="/jules" className="bg-gray-700 hover:bg-gray-600 p-3 rounded text-left transition-colors flex items-center gap-3">
+                    <div className="bg-pink-500/20 p-2 rounded text-pink-400"><Bot size={18} /></div>
+                    <div>
+                        <div className="font-bold">Autopilot</div>
+                        <div className="text-xs text-gray-400">Configure autonomous agents</div>
+                    </div>
+                </Link>
+                <Link href="/jules" className="bg-gray-700 hover:bg-gray-600 p-3 rounded text-left transition-colors flex items-center gap-3">
+                    <div className="bg-amber-500/20 p-2 rounded text-amber-400"><ShieldCheck size={18} /></div>
+                    <div>
+                        <div className="font-bold">Supervisor</div>
+                        <div className="text-xs text-gray-400">Server-side monitoring</div>
+                    </div>
+                </Link>
             </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-400">CPU Load</span>
-                <span className="text-gray-200">12%</span>
-              </div>
-              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                <div className="h-full bg-purple-500 w-[12%]"></div>
-              </div>
+            </div>
+
+            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+            <h2 className="text-lg font-semibold mb-4 border-b border-gray-700 pb-2">Quick Actions</h2>
+            <div className="grid grid-cols-1 gap-4">
+                <button className="bg-gray-700 hover:bg-gray-600 p-3 rounded text-left transition-colors flex items-center gap-3">
+                    <div className="bg-blue-500/20 p-2 rounded text-blue-400"><Puzzle size={18} /></div>
+                    <div>
+                        <div className="font-bold">Add API Key</div>
+                        <div className="text-xs text-gray-400">Configure new tools</div>
+                    </div>
+                </button>
+                <button className="bg-gray-700 hover:bg-gray-600 p-3 rounded text-left transition-colors flex items-center gap-3">
+                    <div className="bg-purple-500/20 p-2 rounded text-purple-400"><Monitor size={18} /></div>
+                    <div>
+                        <div className="font-bold">Install to Clients</div>
+                        <div className="text-xs text-gray-400">Auto-configure Claude/VSCode</div>
+                    </div>
+                </button>
+            </div>
+            </div>
+
+            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+            <h2 className="text-lg font-semibold mb-4 border-b border-gray-700 pb-2">System Resources</h2>
+            <div className="space-y-4">
+                <div>
+                <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-400">Memory Usage</span>
+                    <span className="text-gray-200">1.2 GB / 16 GB</span>
+                </div>
+                <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 w-[15%]"></div>
+                </div>
+                </div>
+                <div>
+                <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-400">CPU Load</span>
+                    <span className="text-gray-200">12%</span>
+                </div>
+                <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-purple-500 w-[12%]"></div>
+                </div>
+                </div>
+            </div>
             </div>
           </div>
-        </div>
       </div>
     </div>
   );
