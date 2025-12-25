@@ -83,7 +83,7 @@ export class CoreService {
     this.configGenerator = new ConfigGenerator(path.join(rootDir, 'mcp-servers'));
     this.clientManager = new ClientManager();
     this.codeExecutionManager = new CodeExecutionManager();
-    this.logManager = new LogManager();
+    this.logManager = new LogManager(path.join(rootDir, 'logs'));
     this.secretManager = new SecretManager(rootDir);
     this.proxyManager = new McpProxyManager(this.mcpManager, this.logManager);
     this.memoryManager = new MemoryManager(path.join(rootDir, 'data'), this.secretManager);
@@ -100,7 +100,7 @@ export class CoreService {
     );
 
     this.mcpInterface = new McpInterface(this.hubServer);
-    this.agentExecutor = new AgentExecutor(this.proxyManager, this.secretManager);
+    this.agentExecutor = new AgentExecutor(this.proxyManager, this.secretManager, this.logManager);
     this.schedulerManager = new SchedulerManager(rootDir, this.agentExecutor, this.proxyManager);
 
     this.commandManager.on('updated', (commands) => {
@@ -208,6 +208,11 @@ export class CoreService {
         } catch (e: any) {
             return reply.code(500).send({ error: e.message });
         }
+    });
+
+    this.app.get('/api/logs', async (request: any, reply) => {
+        const limit = request.query.limit ? parseInt(request.query.limit) : 100;
+        return await this.logManager.getLogs({ limit });
     });
 
     this.app.get('/api/hub/sse', async (request: any, reply) => {
@@ -369,6 +374,21 @@ export class CoreService {
             return `Generated ${args.type} context at ${args.outputPath}`;
         }
         return content;
+    });
+
+    this.proxyManager.registerInternalTool({
+        name: "get_traffic_logs",
+        description: "Retrieve traffic logs for debugging and auditing.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                limit: { type: "number" },
+                type: { type: "string", enum: ["request", "response", "error"] },
+                tool: { type: "string" }
+            }
+        }
+    }, async (args: any) => {
+        return await this.logManager.getLogs(args);
     });
 
     this.proxyManager.registerInternalTool({

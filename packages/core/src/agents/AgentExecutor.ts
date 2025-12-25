@@ -3,13 +3,15 @@ import { McpProxyManager } from '../managers/McpProxyManager.js';
 import { AgentDefinition } from '../types.js';
 import OpenAI from 'openai';
 import { SecretManager } from '../managers/SecretManager.js';
+import { LogManager } from '../managers/LogManager.js';
 
 export class AgentExecutor extends EventEmitter {
     private openai: OpenAI | null = null;
 
     constructor(
         private proxyManager: McpProxyManager,
-        private secretManager?: SecretManager
+        private secretManager?: SecretManager,
+        private logManager?: LogManager
     ) {
         super();
         this.initializeOpenAI();
@@ -75,6 +77,24 @@ export class AgentExecutor extends EventEmitter {
                     tools: openAiTools as any,
                     tool_choice: 'auto'
                 });
+
+                if (this.logManager && completion.usage) {
+                    const cost = this.logManager.calculateCost(
+                        agent.model || 'gpt-4-turbo', 
+                        completion.usage.prompt_tokens, 
+                        completion.usage.completion_tokens
+                    );
+                    
+                    this.logManager.log({
+                        type: 'response',
+                        tool: 'llm_completion',
+                        server: 'openai',
+                        args: { model: agent.model, messagesCount: messages.length },
+                        result: { usage: completion.usage },
+                        tokens: completion.usage.total_tokens,
+                        cost: cost
+                    });
+                }
 
                 const message = completion.choices[0].message;
                 messages.push(message);

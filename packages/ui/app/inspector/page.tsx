@@ -10,6 +10,12 @@ export default function Inspector() {
   const [logs, setLogs] = useState<any[]>([]);
 
   useEffect(() => {
+    // Fetch historical logs
+    fetch('http://localhost:3000/api/logs?limit=100')
+      .then(res => res.json())
+      .then(data => setLogs(data))
+      .catch(err => console.error('Failed to fetch logs:', err));
+
     socket.on('traffic_log', (log: any) => {
       setLogs(prev => [log, ...prev].slice(0, 100)); // Keep last 100
     });
@@ -28,7 +34,8 @@ export default function Inspector() {
           <div className="col-span-1">Type</div>
           <div className="col-span-2">Source/Dest</div>
           <div className="col-span-2">Tool</div>
-          <div className="col-span-5">Payload</div>
+          <div className="col-span-4">Payload</div>
+          <div className="col-span-1">Cost</div>
         </div>
 
         <div className="divide-y divide-gray-700 max-h-[600px] overflow-y-auto">
@@ -56,8 +63,12 @@ export default function Inspector() {
                 <div className="col-span-2 text-yellow-500 flex items-center gap-2">
                   {log.tool && <><Wrench size={14} /> {log.tool}</>}
                 </div>
-                <div className="col-span-5 truncate text-gray-400">
+                <div className="col-span-4 truncate text-gray-400">
                   {log.args ? JSON.stringify(log.args) : JSON.stringify(log.result)}
+                </div>
+                <div className="col-span-1 text-xs text-gray-500 flex flex-col justify-center">
+                    {log.tokens && <span>{log.tokens}t</span>}
+                    {log.cost && <span className="text-green-400">${log.cost.toFixed(5)}</span>}
                 </div>
               </div>
             ))
