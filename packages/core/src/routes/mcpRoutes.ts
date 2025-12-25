@@ -12,7 +12,7 @@ export async function registerMcpRoutes(app: FastifyInstance, service: CoreServi
         commands: service.commandManager.getCommands(),
         scheduledTasks: service.schedulerManager.getTasks(),
         marketplace: service.marketplaceManager.getPackages(),
-        // profiles: service.profileManager.getProfiles()
+        profiles: service.profileManager.getProfiles()
     }));
 
     app.get('/api/config/mcp/:format', async (request: any, reply) => {

@@ -23,8 +23,10 @@ import { MemoryManager } from './managers/MemoryManager.js';
 import { SchedulerManager } from './managers/SchedulerManager.js';
 import { MarketplaceManager } from './managers/MarketplaceManager.js';
 import { DocumentManager } from './managers/DocumentManager.js';
-// import { ProfileManager } from './managers/ProfileManager.js';
+import { ProfileManager } from './managers/ProfileManager.js';
+import { ContextGenerator } from './utils/ContextGenerator.js';
 import { toToon, FormatTranslatorTool } from './utils/toon.js';
+import fs from 'fs';
 import { registerMcpRoutes } from './routes/mcpRoutes.js';
 import { registerAgentRoutes } from './routes/agentRoutes.js';
 
@@ -52,7 +54,7 @@ export class CoreService {
   public schedulerManager: SchedulerManager;
   public marketplaceManager: MarketplaceManager;
   public documentManager: DocumentManager;
-  // public profileManager: ProfileManager;
+  public profileManager: ProfileManager;
 
   constructor(
     private rootDir: string
@@ -87,7 +89,7 @@ export class CoreService {
     this.memoryManager = new MemoryManager(path.join(rootDir, 'data'), this.secretManager);
     this.marketplaceManager = new MarketplaceManager(rootDir);
     this.documentManager = new DocumentManager(path.join(rootDir, 'documents'), this.memoryManager);
-    // this.profileManager = new ProfileManager(rootDir);
+    this.profileManager = new ProfileManager(rootDir);
 
     this.hubServer = new HubServer(
         this.proxyManager,
@@ -189,7 +191,6 @@ export class CoreService {
         }
     });
 
-    /*
     this.app.post('/api/profiles/activate', async (request: any, reply) => {
         const { name } = request.body;
         const profile = this.profileManager.activateProfile(name);
@@ -198,7 +199,6 @@ export class CoreService {
         }
         return reply.code(404).send({ error: "Profile not found" });
     });
-    */
 
     this.app.post('/api/inspector/replay', async (request: any, reply) => {
         const { tool, args, server } = request.body;
@@ -268,7 +268,7 @@ export class CoreService {
         commands: this.commandManager.getCommands(),
         scheduledTasks: this.schedulerManager.getTasks(),
         marketplace: this.marketplaceManager.getPackages(),
-        // profiles: this.profileManager.getProfiles()
+        profiles: this.profileManager.getProfiles()
       });
 
       socket.on('hook_event', (event: HookEvent) => {
@@ -286,7 +286,7 @@ export class CoreService {
     this.commandManager.on('updated', (commands) => this.io.emit('commands_updated', commands));
     this.mcpManager.on('updated', (servers) => this.io.emit('mcp_updated', servers));
     this.marketplaceManager.on('updated', (pkgs) => this.io.emit('marketplace_updated', pkgs));
-    // this.profileManager.on('updated', (profiles) => this.io.emit('profiles_updated', profiles));
+    this.profileManager.on('updated', (profiles) => this.io.emit('profiles_updated', profiles));
   }
 
   private async processHook(event: HookEvent) {
@@ -340,6 +340,35 @@ export class CoreService {
     this.proxyManager.registerInternalTool(FormatTranslatorTool, async (args: any) => {
         const json = typeof args.data === 'string' ? JSON.parse(args.data) : args.data;
         return toToon(json);
+    });
+
+    this.proxyManager.registerInternalTool({
+        name: "generate_context_file",
+        description: "Generate a context file (CLAUDE.md, .cursorrules) based on the current profile.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                type: { type: "string", enum: ["claude", "cursor"] },
+                outputPath: { type: "string" }
+            },
+            required: ["type"]
+        }
+    }, async (args: any) => {
+        const agents = this.agentManager.getAgents();
+        const skills = this.skillManager.getSkills();
+        
+        let content = "";
+        if (args.type === 'claude') {
+            content = ContextGenerator.generateClaudeMd(agents, skills);
+        } else if (args.type === 'cursor') {
+            content = ContextGenerator.generateCursorRules(agents, skills);
+        }
+
+        if (args.outputPath) {
+            fs.writeFileSync(args.outputPath, content);
+            return `Generated ${args.type} context at ${args.outputPath}`;
+        }
+        return content;
     });
 
     this.proxyManager.registerInternalTool({
