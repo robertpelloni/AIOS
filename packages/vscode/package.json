@@ -2,7 +2,7 @@
   "name": "super-ai-vscode",
   "displayName": "Super AI Plugin",
   "description": "VSCode Client for Super AI Plugin Hub",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.80.0"
   },

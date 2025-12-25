@@ -5,8 +5,8 @@ A "Super AI Plugin" acting as a Meta-Orchestrator (Hub) for the Model Context Pr
 
 ---
 
-## ✅ Phase 1: The Core Foundation (v1.3 Completed)
-**Status:** Implemented & Merged.
+## ✅ Phase 1: The Core Foundation (Completed)
+**Status:** Implemented in v1.0.0.
 
 ### Core Architecture
 - [x] **Monorepo Structure:** `pnpm` workspaces (`core`, `ui`, `cli`, `vscode`, `browser`).
@@ -17,9 +17,9 @@ A "Super AI Plugin" acting as a Meta-Orchestrator (Hub) for the Model Context Pr
 ### Feature Set
 - [x] **Agent Executor:** Autonomous ReAct loop (`AGENTS.md`).
 - [x] **Memory Manager:** Native persistence (`memory.json`) + Fuzzy Search (`Fuse.js`).
-- [x] **Document Ingestion:** PDF/Text chunking from `documents/` (v1.3).
-- [x] **Profile Manager:** Switch configs via `profiles/` (v1.3).
-- [x] **Handoff Manager:** Session save/resume via `handoffs/` (v1.3).
+- [x] **Document Ingestion:** PDF/Text chunking from `documents/`.
+- [x] **Profile Manager:** Switch configs via `profiles/`.
+- [x] **Handoff Manager:** Session save/resume via `handoffs/`.
 - [x] **Scheduler:** CRON-based task execution (`scheduler.json`).
 - [x] **Secrets:** `.secrets.json` management.
 - [x] **Traffic Inspector:** "Mcpshark" UI (Log/Replay).
@@ -30,30 +30,39 @@ A "Super AI Plugin" acting as a Meta-Orchestrator (Hub) for the Model Context Pr
 - [x] **Web Dashboard:** React UI for all managers.
 - [x] **CLI Tool:** `super-ai` skeleton.
 - [x] **VSCode Extension:** Skeleton connection.
-- [x] **Browser Extension:** Skeleton connection.
+- [x] **Browser Extension:** Context reading & injection.
 - [x] **Mcpenetes:** Logic integrated into `ClientManager` for auto-config.
 - [x] **MetaMCP:** Connector for Docker-based backend.
 
 ---
 
-## 🚧 Phase 2: Active Intelligence (Current Focus)
+## ✅ Phase 2: Active Intelligence (Completed)
+**Status:** Implemented in v1.0.0.
 
-### 1. Browser Integration (Priority)
-- [ ] **Context Injection:** Allow Agents to read the active browser tab.
-- [ ] **Navigation:** Allow Agents to control the browser (`open_url`).
-- [ ] **Selection:** Capture user selection from browser context menu.
+### 1. Browser Integration
+- [x] **Context Injection:** Allow Agents to read (`read_active_tab`) and write (`inject_context`) to the browser.
+- [x] **Navigation:** Allow Agents to control the browser (`browser_navigate`).
 
 ### 2. Model Gateway
 - [x] **Basic:** OpenAI/Ollama support in `ModelGateway.ts`.
-- [ ] **Advanced:** Anthropic SDK integration, Rate Limiting, Cost Tracking.
+- [x] **Advanced:** Anthropic SDK integration via REST.
+- [x] **Usage:** Token usage and cost tracking.
 
-### 3. Submodule "Deep" Integrations
-- [ ] **Claude-Mem:** Re-attempt stdio integration or port logic to TypeScript.
-- [ ] **Jules App:** Embed UI or link deep integration.
-- [ ] **Skill Porter:** Auto-convert imported skills to native format.
+### 3. Semantic Search
+- [x] **Vector DB:** `VectorStore` implemented with persistence (`vectors.json`).
+- [x] **Hybrid Search:** `MemoryManager` combines Semantic + Fuzzy search.
 
-### 4. Semantic Search Upgrade
-- [ ] **Vector DB:** Upgrade from `Fuse.js` to `pgvector` (via MetaMCP) or local `lancedb`.
+### 4. Advanced Orchestration
+- [x] **Multi-CLI:** `PipelineTool` for sequential execution.
+- [x] **Subagents:** Recursive agent execution (`run_subagent`).
+- [x] **Passive Memory:** `TrafficObserver` for auto-fact extraction.
+
+---
+
+## 🔮 Phase 3: Future Ecosystem (Post-v1.0)
+- [ ] **Cloud Sync:** Sync memory/profiles across devices.
+- [ ] **Visual Flow Builder:** Drag-and-drop agent composition.
+- [ ] **Auth:** Multi-user support.
 
 ---
 
@@ -62,7 +71,7 @@ A "Super AI Plugin" acting as a Meta-Orchestrator (Hub) for the Model Context Pr
 | :--- | :--- | :--- |
 | `metamcp` | Hub Architecture | Reference Used / Connector Implemented |
 | `mcpenetes` | Client Config | Logic Ported to `ClientManager` |
-| `claude-mem` | Memory | Submodule Added (Integration Pending) |
+| `claude-mem` | Memory | Submodule Added (Logic Replicated in MemoryManager) |
 | `jules-app` | UI | Submodule Added (Placeholder Page) |
 | `prompt-eng-tutorial`| Prompts | Reference for Prompt Improver |
 | `superpowers` | Skills | Reference for `skills/` |
