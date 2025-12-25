@@ -2,6 +2,9 @@
 
 This document compiles the design decisions, planned features, and submodule integration strategies discussed throughout the project's inception. It serves as the master plan for developing the "Super AI Plugin".
 
+For a granular list of every planned feature and submodule integration from the project inception, see:
+👉 **[docs/DETAILED_BACKLOG.md](docs/DETAILED_BACKLOG.md)**
+
 ## 1. Core Infrastructure (The "Hub")
 **Status:** In Progress (Skeleton Built)
 **Reference:** `submodules/metamcp`
@@ -71,14 +74,15 @@ This document compiles the design decisions, planned features, and submodule int
     *   [x] **UI Integration:** Embed the Agent control interface into the `packages/ui` dashboard.
     *   [x] **Subagent Delegation:** Allow the main agent to spin up sub-agents for specific tasks.
 
-## 6. Browser Connectivity
-**Status:** Research Needed
-**Reference:** `references/MCP-SuperAssistant`
+## 6. Browser Connectivity (Immediate Priority)
+**Status:** ✅ Implemented (v0.0.9)
+**Reference:** `docs/RESEARCH_BROWSER_CONNECTIVITY.md`
 
-*   **Objective:** Connect the Hub to the Web Browser.
+*   **Objective:** Connect the Hub to the Web Browser (Chrome/Firefox) to allow agents to see and interact with the web.
 *   **Planned Features:**
-    *   [ ] **Browser Extension:** Build/Adapt the extension to communicate with the Hub via WebSocket.
-    *   [ ] **Context Injection:** Allow the Hub to read/write browser content.
+    *   [x] **Extension Bridge:** WebSocket server to connect with `MCP-SuperAssistant` extension.
+    *   [x] **Browser Tools:** `browser_get_content`, `browser_click`, `browser_navigate`.
+    *   [ ] **Context Injection:** Two-way sync between Browser and Hub.
 
 ## 7. Multi-CLI Orchestration
 **Status:** Research Needed
@@ -156,18 +160,8 @@ This document compiles the design decisions, planned features, and submodule int
 
 ---
 
-## ✅ Completed (v1.0 - Web Dashboard)
-- [x] **Universal Hub Architecture:** Aggregation of Local, Remote, and Internal tools.
-- [x] **Web Dashboard:** Unified React UI served from Core.
-- [x] **Progressive Disclosure:** Hiding tools by default to save tokens.
-- [x] **Agent Executor:** Running autonomous agents (ReAct loop).
-- [x] **Memory Management:** Native `remember`/`recall` with fuzzy search.
-- [x] **Command System:** Slash commands from `commands/` directory.
-- [x] **Scheduler:** CRON-based task execution.
-- [x] **Marketplace:** Installing extensions from remote registry.
-- [x] **Code Mode:** Secure sandboxed execution.
-- [x] **Mcpenetes Integration:** Auto-configuration of clients.
-- [x] **MetaMCP Integration:** Proxying to Docker-based backend.
-- [x] **Jules Integration:** Integrated Jules Control Tower, Session Management, and Broadcast capabilities.
-- [x] **Session Keeper:** Automated session monitoring, nudging, and "Debate Mode" (Council) for stuck agents.
-- [x] **System Dashboard:** Live view of project structure and submodule status (`/project` page).
+## Version History
+- **v0.0.1:** Initial Skeleton.
+- **v0.0.5:** UI Dashboard & Basic Managers.
+- **v0.0.8:** Advanced Orchestration (Registry, Broker, Delegation).
+- **v0.0.9:** Browser Connectivity (Extension Bridge).

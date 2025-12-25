@@ -1,48 +1,49 @@
 # Project Status Report
 
 **Date:** December 25, 2025
-**Version:** 0.0.8 (Alpha)
+**Version:** 0.0.9 (Beta)
 
 ## Executive Summary
 
-The "Super AI Plugin" (AIOS) has reached version 0.0.8. The core infrastructure has been significantly enhanced with Semantic Search, Traffic Logging, Project Introspection, and an Agent Registry. The system now supports advanced orchestration capabilities including Agent-to-Agent (A2A) communication and discovery.
+The "Super AI Plugin" (AIOS) has reached version 0.0.9. The system now includes a **Browser Extension Bridge**, allowing agents to control and read from a web browser. This completes the "Advanced Orchestration" phase and moves the project into the "Connectivity" phase.
 
 ## Component Status
 
 ### 1. Core Service (`packages/core`)
 - **Status:** ✅ Operational
 - **New Features:**
+    - **Browser Manager:** WebSocket server for browser extension connectivity.
+    - **Browser Tools:** `browser_navigate`, `browser_get_content`.
     - **Agent Registry:** Centralized discovery for agents and capabilities.
     - **Message Broker:** A2A communication bus with mailbox support.
-    - **Project Manager:** Introspection of git submodules and directory structure.
-    - **Memory Manager:** Enhanced with OpenAI embeddings for semantic search.
-    - **Log Manager:** Persistent traffic logging to `logs/traffic.jsonl`.
-    - **Profile Manager:** Context generation for Claude and Cursor.
 
-### 2. UI Dashboard (`packages/ui`)
+### 2. Browser Extension (`packages/browser-extension`)
+- **Status:** ✅ Implemented (Beta)
+- **Features:**
+    - **WebSocket Client:** Connects to Hub.
+    - **Command Execution:** Handles navigation and content extraction.
+    - **Manifest V3:** Compliant with modern Chrome standards.
+
+### 3. UI Dashboard (`packages/ui`)
 - **Status:** ✅ Operational
 - **New Features:**
     - **Project Page:** Visualizes project structure and submodule status.
     - **Traffic Inspector:** View raw MCP traffic logs.
-    - **Search:** Semantic search interface for memory and docs.
 
-### 3. Orchestration
-- **Status:** 🚧 In Progress
+### 4. Orchestration
+- **Status:** ✅ Operational
 - **Details:**
-    - Implemented `AgentRegistry` and `AgentMessageBroker`.
-    - Added `send_message`, `check_mailbox`, and `list_agents` tools.
     - **Autonomous Agents:** Implemented `AutonomousAgent` loop and `AutonomousAgentManager`.
-    - **UI:** Added "Start/Stop Auto" controls to the Agents page.
     - **Subagents:** Implemented `delegate_task` tool for spawning sub-agents.
-    - **Next Steps:** Browser Connectivity.
+    - **Browser Control:** Agents can now browse the web via the extension.
 
 ## Recent Activity
-- **Release v0.0.8**: Consolidated all feature branches and updated documentation.
-- **Documentation**: Standardized `docs/LLM_INSTRUCTIONS.md` as the universal prompt.
-- **Advanced Orchestration**: Implemented foundational A2A protocols, Autonomous Agent Loop, and Subagent Delegation.
+- **Release v0.0.9**: Added Browser Connectivity.
+- **Browser Extension**: Created `@aios/browser-extension` package.
+- **Hub Update**: Added `BrowserManager` to `CoreService`.
 
 ## Immediate Next Steps
 
-1.  **Browser Connectivity:** Connect the Hub to the browser via extension.
-2.  **Client Integration:** Auto-configure VSCode/Claude to use the Hub.
-3.  **Memory System:** Deepen the memory integration with vector search.
+1.  **Client Integration:** Auto-configure VSCode/Claude to use the Hub.
+2.  **Memory System:** Deepen the memory integration with vector search.
+3.  **Testing:** End-to-end testing of the browser extension.
