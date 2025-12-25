@@ -31,7 +31,7 @@ interface BroadcastDialogProps {
 const TEMPLATES = [
   {
     label: "Merge & Update",
-    text: "Please merge all feature branches into main and then update your local branch to main."
+    text: "Please merge all feature branches into main and also update all submodules and any upstream changes, correcting any issues, then update your local branch to main so that you are working with the latest changes."
   },
   {
     label: "Reanalyze & Check Features",

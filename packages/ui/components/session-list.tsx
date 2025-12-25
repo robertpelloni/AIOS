@@ -262,7 +262,13 @@ export function SessionList({
                     </TooltipContent>
                   </Tooltip>
                   <div className="flex-1 min-w-0">
-                    {/* Line 1: Title + Repo */}
+                    {/* Line 0: Repo Name */}
+                    {session.sourceId && (
+                      <div className="text-[9px] text-white/50 font-mono mb-1 truncate">
+                        {session.sourceId}
+                      </div>
+                    )}
+                    {/* Line 1: Title */}
                     <div className="flex items-center gap-2 mb-0.5 w-full min-w-0">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -278,11 +284,6 @@ export function SessionList({
                           <p>{session.title || "Untitled"}</p>
                         </TooltipContent>
                       </Tooltip>
-                      {session.sourceId && (
-                        <Badge className="shrink-0 text-[9px] px-1.5 py-0 h-4 font-mono bg-white/10 text-white/70 hover:bg-white/20 border-0 rounded-sm uppercase tracking-wider">
-                          {getRepoShortName(session.sourceId)}
-                        </Badge>
-                      )}
                     </div>
 
                     {/* Line 2: Status + Created At */}
@@ -297,7 +298,7 @@ export function SessionList({
                     {/* Line 3: Last Active Time */}
                     {lastActivityTime && (
                       <div className="text-[9px] text-white/30 font-mono leading-tight truncate">
-                        Active {lastActivityTime}
+                        last activity {lastActivityTime}
                       </div>
                     )}
 
