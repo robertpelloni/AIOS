@@ -95,7 +95,7 @@ export class CoreService {
     this.contextManager = new ContextManager(path.join(rootDir, 'context'));
     this.commandManager = new CommandManager(path.join(rootDir, 'commands'));
     this.mcpManager = new McpManager(path.join(rootDir, 'mcp-servers'));
-    this.configGenerator = new ConfigGenerator(path.join(rootDir, 'mcp-servers'));
+    this.configGenerator = new ConfigGenerator(path.join(rootDir, 'mcp-servers'), rootDir);
     this.clientManager = new ClientManager();
     this.codeExecutionManager = new CodeExecutionManager();
     this.logManager = new LogManager(path.join(rootDir, 'logs'));

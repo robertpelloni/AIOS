@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 export class ConfigGenerator {
-  constructor(private mcpDir: string) {}
+  constructor(private mcpDir: string, private rootDir: string) {}
 
   async generateConfig(type: 'json' | 'toml' | 'xml'): Promise<string> {
     const servers = await this.scanServers();
@@ -20,10 +20,9 @@ export class ConfigGenerator {
   }
 
   private async scanServers() {
-    // Mock scanning logic: look for subdirectories in mcp-servers/
-    // If a subdirectory contains a package.json, assume it's a Node server
     const servers: Record<string, any> = {};
     
+    // 1. Scan Directories
     try {
         const entries = await fs.readdir(this.mcpDir, { withFileTypes: true });
         const dirs = entries.filter(e => e.isDirectory());
@@ -40,6 +39,20 @@ export class ConfigGenerator {
     } catch (err) {
         console.warn('Could not scan mcp-servers directory', err);
     }
+
+    // 2. Load .mcp.json
+    try {
+        const configPath = path.join(this.rootDir, '.mcp.json');
+        const content = await fs.readFile(configPath, 'utf-8');
+        const config = JSON.parse(content);
+
+        if (config.mcpServers) {
+            Object.assign(servers, config.mcpServers);
+        }
+    } catch (e) {
+        // Ignore if missing
+    }
+
     return servers;
   }
 }
