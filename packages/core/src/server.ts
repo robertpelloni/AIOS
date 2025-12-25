@@ -26,6 +26,7 @@ import { DocumentManager } from './managers/DocumentManager.js';
 import { ProfileManager } from './managers/ProfileManager.js';
 import { ProjectManager } from './managers/ProjectManager.js';
 import { AgentMessageBroker } from './managers/AgentMessageBroker.js';
+import { AutonomousAgentManager } from './managers/AutonomousAgentManager.js';
 import { ContextGenerator } from './utils/ContextGenerator.js';
 import { toToon, FormatTranslatorTool } from './utils/toon.js';
 import fs from 'fs';
@@ -61,6 +62,7 @@ export class CoreService {
   public profileManager: ProfileManager;
   public projectManager: ProjectManager;
   public messageBroker: AgentMessageBroker;
+  public autonomousAgentManager: AutonomousAgentManager;
 
   constructor(
     private rootDir: string
@@ -98,6 +100,13 @@ export class CoreService {
     this.profileManager = new ProfileManager(rootDir);
     this.projectManager = new ProjectManager(rootDir);
     this.messageBroker = new AgentMessageBroker();
+    this.autonomousAgentManager = new AutonomousAgentManager(
+        this.agentManager,
+        this.messageBroker,
+        this.proxyManager,
+        this.logManager,
+        this.secretManager
+    );
 
     this.hubServer = new HubServer(
         this.proxyManager,
@@ -234,6 +243,27 @@ export class CoreService {
     this.app.get('/api/hub/sse', async (request: any, reply) => {
         await this.hubServer.handleSSE(request.raw, reply.raw);
         reply.hijack();
+    });
+
+    // Autonomous Agent Control
+    this.app.post('/api/agents/:id/start', async (request: any, reply) => {
+        const { id } = request.params;
+        try {
+            await this.autonomousAgentManager.startAgent(id);
+            return { status: 'started', id };
+        } catch (e: any) {
+            return reply.code(500).send({ error: e.message });
+        }
+    });
+
+    this.app.post('/api/agents/:id/stop', async (request: any, reply) => {
+        const { id } = request.params;
+        this.autonomousAgentManager.stopAgent(id);
+        return { status: 'stopped', id };
+    });
+
+    this.app.get('/api/agents/running', async () => {
+        return { agents: this.autonomousAgentManager.getRunningAgents() };
     });
 
     this.app.post('/api/hub/messages', async (request: any, reply) => {
