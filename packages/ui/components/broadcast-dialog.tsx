@@ -31,7 +31,7 @@ interface BroadcastDialogProps {
 const TEMPLATES = [
   {
     label: "Merge & Update",
-    text: "Please merge all feature branches into main. Update all submodules and merge upstream changes (including forked submodules). Resolve any issues, then update your local branch to main to ensure you are working with the latest changes."
+    text: "Please merge all feature branches into main. Update all submodules and merge upstream changes (including forked submodules). Resolve any issues, then update your local branch to main to ensure you are working with the latest changes. Additionally, please create or update a dashboard page (or documentation) that lists all submodules with their versions, dates, and build numbers, including a clear explanation of the project directory structure and submodule locations."
   },
   {
     label: "Reanalyze & Check Features",
@@ -47,11 +47,11 @@ const TEMPLATES = [
   },
   {
     label: "Update, Fix & Redeploy",
-    text: "Please update all submodules and merge upstream changes (including forks). Fix any new issues. Update the changelog, version number, documentation, and roadmap. Commit and push changes for each repository, then redeploy."
+    text: "Please update all submodules and merge upstream changes (including forks). Fix any new issues. Update the changelog, version number, documentation, and roadmap. Additionally, create or update a dashboard page (or documentation) listing all submodules with their versions and locations, along with an explanation of the project structure. Commit and push changes for each repository, then redeploy."
   },
   {
     label: "Super Protocol (All-in-One)",
-    text: "Please execute the following protocol: 1) Merge all feature branches into main, update submodules, and merge upstream changes (including forks). 2) Reanalyze the project and history to identify missing features. 3) Comprehensively update the roadmap and documentation to reflect all progress. 4) Update the changelog and increment the version number. 5) Commit and push all changes to the remote repository. 6) Redeploy the application."
+    text: "Please execute the following protocol: 1) Merge all feature branches into main, update submodules, and merge upstream changes (including forks). 2) Reanalyze the project and history to identify missing features. 3) Comprehensively update the roadmap and documentation to reflect all progress. 4) Create or update a dashboard page (or documentation) listing all submodules with their versions and locations, including a project structure explanation. 5) Update the changelog and increment the version number. 6) Commit and push all changes to the remote repository. 7) Redeploy the application."
   }
 ];
 
