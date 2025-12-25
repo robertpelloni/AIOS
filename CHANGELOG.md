@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.8] - 2025-12-25
+
+### Added
+- **Semantic Search**: Implemented vector-based memory search using OpenAI Embeddings (`text-embedding-3-small`).
+- **Traffic Inspection**: Added `LogManager` to persist and query traffic logs (`logs/traffic.jsonl`).
+- **Cost Tracking**: Added token usage and cost estimation to the Inspector UI.
+- **Profile Management**: Implemented `ProfileManager` to switch between agent/tool configurations.
+- **Context Generation**: Added tools to auto-generate `CLAUDE.md` and `.cursorrules` from active profiles.
+- **Inspector UI**: Enhanced Inspector with historical log viewing and cost metrics.
+
 ## [0.0.7] - 2025-12-25
 
 ### Added
