@@ -151,6 +151,9 @@ export class AgentManager extends EventEmitter {
   }
 
   getAgents() {
-    return Array.from(this.agents.values());
+    return Array.from(this.agents.entries()).map(([id, agent]) => ({
+        ...agent,
+        id
+    }));
   }
 }
