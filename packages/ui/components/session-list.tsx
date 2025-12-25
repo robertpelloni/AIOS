@@ -286,21 +286,20 @@ export function SessionList({
                       </Tooltip>
                     </div>
 
-                    {/* Line 2: Status + Created At */}
-                    <div className="flex items-center gap-2 text-[9px] text-white/40 leading-tight font-mono tracking-wide mb-0.5">
-                      <span className={`${statusInfo.color} ${statusInfo.text.includes('Error') ? 'text-white font-bold bg-opacity-100' : 'bg-opacity-20 text-white/60'} px-1 rounded-sm`}>
+                    {/* Line 2: Status + Dates */}
+                    <div className="flex items-start gap-2 text-[9px] text-white/40 leading-tight font-mono tracking-wide mb-0.5">
+                      <span className={`${statusInfo.color} ${statusInfo.text.includes('Error') ? 'text-white font-bold bg-opacity-100' : 'bg-opacity-20 text-white/60'} px-1 rounded-sm shrink-0 mt-px`}>
                         {statusInfo.text}
                       </span>
-                      <span>•</span>
-                      <span>{formatDate(session.createdAt)}</span>
-                    </div>
-
-                    {/* Line 3: Last Active Time */}
-                    {lastActivityTime && (
-                      <div className="text-[9px] text-white/30 font-mono leading-tight truncate">
-                        last activity {lastActivityTime}
+                      <div className="flex flex-col min-w-0">
+                        <span className="truncate">Started {formatDate(session.createdAt)}</span>
+                        {lastActivityTime && (
+                          <span className="text-white/30 truncate">
+                            last activity {lastActivityTime}
+                          </span>
+                        )}
                       </div>
-                    )}
+                    </div>
 
                     {/* Line 4: Last Activity Snippet */}
                     {lastActivitySnippet && (

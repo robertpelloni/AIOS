@@ -31,23 +31,27 @@ interface BroadcastDialogProps {
 const TEMPLATES = [
   {
     label: "Merge & Update",
-    text: "Please merge all feature branches into main and also update all submodules and any upstream changes, correcting any issues, then update your local branch to main so that you are working with the latest changes."
+    text: "Please merge all feature branches into main. Update all submodules and merge upstream changes (including forked submodules). Resolve any issues, then update your local branch to main to ensure you are working with the latest changes."
   },
   {
     label: "Reanalyze & Check Features",
-    text: "Outstanding. Please reanalyze the project and conversation history and determine if there are any further features to implement."
+    text: "Outstanding work. Please reanalyze the project state and conversation history to identify any further features that need implementation."
   },
   {
     label: "Roadmap & Documentation",
-    text: "Please closely analyze the entire conversation history in full and note every feature, package, implementation detail, etc, and organize them into the roadmap and documentation, noting what has already been accomplished and what is not done yet. Please then continue work on the next feature."
+    text: "Please analyze the entire conversation history and project status. Organize every feature, package, and implementation detail into the roadmap and documentation. Clearly distinguish between what has been accomplished and what remains to be done, then proceed to the next feature."
   },
   {
     label: "Update Docs & Push",
-    text: "Please update changelog and version number, documentation and roadmap, commit and push to git."
+    text: "Please update the changelog, increment the version number, and ensure the documentation and roadmap are current. Commit all changes and push to the remote repository."
   },
   {
     label: "Update, Fix & Redeploy",
-    text: "Please update all submodules, merge in upstream changes (including for forked submodules), fix any issues, update changelog and version number, documentation and roadmap. Commit and push changes for each repository, then redeploy."
+    text: "Please update all submodules and merge upstream changes (including forks). Fix any new issues. Update the changelog, version number, documentation, and roadmap. Commit and push changes for each repository, then redeploy."
+  },
+  {
+    label: "Super Protocol (All-in-One)",
+    text: "Please execute the following protocol: 1) Merge all feature branches into main, update submodules, and merge upstream changes (including forks). 2) Reanalyze the project and history to identify missing features. 3) Comprehensively update the roadmap and documentation to reflect all progress. 4) Update the changelog and increment the version number. 5) Commit and push all changes to the remote repository. 6) Redeploy the application."
   }
 ];
 
