@@ -31,6 +31,7 @@ import { BrowserManager } from './managers/BrowserManager.js';
 import { TrafficObserver } from './services/TrafficObserver.js';
 import { VectorStore } from './services/VectorStore.js';
 import { PipelineTool, executePipeline } from './tools/PipelineTool.js';
+import { createPromptImprover } from './tools/PromptImprover.js';
 import { toToon, FormatTranslatorTool } from './utils/toon.js';
 import { ModelGateway } from './gateway/ModelGateway.js';
 
@@ -97,7 +98,6 @@ export class CoreService {
     this.codeExecutionManager = new CodeExecutionManager();
     this.logManager = new LogManager(path.join(rootDir, 'logs'));
     this.secretManager = new SecretManager(rootDir);
-    this.proxyManager = new McpProxyManager(this.mcpManager, this.logManager);
     this.memoryManager = new MemoryManager(path.join(rootDir, 'data'));
     this.marketplaceManager = new MarketplaceManager(rootDir);
     this.documentManager = new DocumentManager(path.join(rootDir, 'documents'), this.memoryManager);
@@ -109,6 +109,8 @@ export class CoreService {
     this.modelGateway = new ModelGateway(this.secretManager);
     this.trafficObserver = new TrafficObserver(this.modelGateway, this.memoryManager);
     this.vectorStore = new VectorStore(this.modelGateway);
+
+    this.proxyManager = new McpProxyManager(this.mcpManager, this.logManager, this.vectorStore);
 
     this.hubServer = new HubServer(
         this.proxyManager,
@@ -128,6 +130,15 @@ export class CoreService {
 
     this.healthService.on('clientsUpdated', (clients) => {
         this.io.emit('health_updated', this.healthService.getSystemStatus());
+    });
+
+    // Hook Trigger Wiring
+    this.proxyManager.on('pre_tool_call', (data) => {
+        this.processHook({ type: 'PreToolUse', ...data });
+    });
+
+    this.proxyManager.on('post_tool_call', (data) => {
+        this.processHook({ type: 'PostToolUse', ...data });
     });
 
     this.setupRoutes();
@@ -365,7 +376,7 @@ export class CoreService {
     this.profileManager.on('profileChanged', (p) => this.io.emit('profile_changed', p));
   }
 
-  private async processHook(event: HookEvent) {
+  private async processHook(event: any) {
       const hooks = this.hookManager.getHooks();
       const matched = hooks.filter(h => h.event === event.type);
       
@@ -441,6 +452,9 @@ export class CoreService {
     this.proxyManager.registerInternalTool(PipelineTool, async (args: any) => {
         return await executePipeline(this.proxyManager, args.steps, args.initialContext);
     });
+
+    const promptImprover = createPromptImprover(this.modelGateway);
+    this.proxyManager.registerInternalTool(promptImprover, promptImprover.handler);
 
     this.proxyManager.registerInternalTool({
         name: "install_package",

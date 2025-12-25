@@ -87,9 +87,41 @@ export class ModelGateway {
     }
 
     private async callAnthropic(req: CompletionRequest): Promise<CompletionResponse> {
-         // Placeholder for Anthropic implementation
-         // Would use @anthropic-ai/sdk
-         throw new Error("Anthropic support pending dependency installation.");
+         const apiKey = this.secretManager.getSecret('ANTHROPIC_API_KEY');
+         if (!apiKey) throw new Error("ANTHROPIC_API_KEY not found");
+
+         // Use native fetch to avoid @anthropic-ai/sdk dependency weight/limit
+         const response = await fetch('https://api.anthropic.com/v1/messages', {
+             method: 'POST',
+             headers: {
+                 'x-api-key': apiKey,
+                 'anthropic-version': '2023-06-01',
+                 'content-type': 'application/json'
+             },
+             body: JSON.stringify({
+                 model: this.model || 'claude-3-opus-20240229',
+                 max_tokens: req.maxTokens || 1024,
+                 system: req.system,
+                 messages: req.messages.map(m => ({
+                     role: m.role,
+                     content: m.content
+                 })),
+                 // Note: Tool use mapping for Anthropic is complex (XML/Tool Blocks),
+                 // omitting full tool schema translation for this REST implementation
+                 // to keep it lightweight. Ideally use SDK if tools needed.
+                 // This basic implementation supports chat/prompt modes.
+             })
+         });
+
+         if (!response.ok) {
+             const err = await response.text();
+             throw new Error(`Anthropic API Error: ${err}`);
+         }
+
+         const data = await response.json() as any;
+         return {
+             content: data.content[0].text
+         };
     }
 
     private async callOllama(req: CompletionRequest): Promise<CompletionResponse> {
