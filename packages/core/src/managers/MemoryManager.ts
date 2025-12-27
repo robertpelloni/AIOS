@@ -5,6 +5,7 @@ import { SecretManager } from './SecretManager.js';
 import { MemoryProvider, MemoryItem, MemoryResult } from '../interfaces/MemoryProvider.js';
 import { FileMemoryProvider } from './providers/FileMemoryProvider.js';
 import { Mem0Provider } from './providers/Mem0Provider.js';
+import { PineconeMemoryProvider } from './providers/PineconeMemoryProvider.js';
 import { BrowserStorageProvider } from './providers/BrowserStorageProvider.js';
 import { ContextCompactor } from './ContextCompactor.js';
 import { JulesIngestor } from '../ingestors/JulesIngestor.js';
@@ -131,7 +132,16 @@ export class MemoryManager {
             await this.registerProvider(mem0);
         }
 
-        // 2. Check for Docker Containers (Mock logic for now)
+        // 2. Check for Pinecone
+        const pineconeKey = this.secretManager?.getSecret('PINECONE_API_KEY') || process.env.PINECONE_API_KEY;
+        const pineconeIndex = this.secretManager?.getSecret('PINECONE_INDEX') || process.env.PINECONE_INDEX;
+        if (pineconeKey && pineconeIndex) {
+            console.log('[Memory] Detected Pinecone API Key, initializing provider...');
+            const pinecone = new PineconeMemoryProvider(pineconeKey, pineconeIndex);
+            await this.registerProvider(pinecone);
+        }
+
+        // 3. Check for Docker Containers (Mock logic for now)
         // In a real implementation, we'd use Dockerode to list containers
         // if (docker.hasContainer('chroma')) ...
 
@@ -192,22 +202,34 @@ export class MemoryManager {
     }
 
     async search(args: { query: string, providerId?: string }) {
+        // Generate embedding once if possible
+        let embedding: number[] | undefined;
+        if (this.openai) {
+            embedding = await this.generateEmbedding(args.query);
+        }
+
+        // Helper to search a single provider
+        const searchProvider = async (provider: MemoryProvider) => {
+             try {
+                return await provider.search(args.query, 5, embedding);
+            } catch (e) {
+                console.error(`[Memory] Search failed for ${provider.name}:`, e);
+                return [];
+            }
+        };
+
         // If provider specified, search only that
         if (args.providerId) {
             const provider = this.providers.get(args.providerId);
             if (!provider) return [];
-            return await provider.search(args.query);
+            return await searchProvider(provider);
         }
 
         // Otherwise, search ALL providers and aggregate
         const allResults: MemoryResult[] = [];
         for (const provider of this.providers.values()) {
-            try {
-                const results = await provider.search(args.query);
-                allResults.push(...results);
-            } catch (e) {
-                console.error(`[Memory] Search failed for ${provider.name}:`, e);
-            }
+            const results = await searchProvider(provider);
+            allResults.push(...results);
         }
         return allResults;
     }

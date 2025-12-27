@@ -22,7 +22,7 @@ export interface MemoryProvider {
     disconnect(): Promise<void>;
     
     insert(item: MemoryItem): Promise<string>;
-    search(query: string, limit?: number): Promise<MemoryResult[]>;
+    search(query: string, limit?: number, embedding?: number[]): Promise<MemoryResult[]>;
     delete(id: string): Promise<void>;
     
     // Optional: For sync/transfer

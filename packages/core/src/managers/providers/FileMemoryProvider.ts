@@ -48,7 +48,7 @@ export class FileMemoryProvider implements MemoryProvider {
         return item.id;
     }
 
-    async search(query: string, limit: number = 5): Promise<MemoryResult[]> {
+    async search(query: string, limit: number = 5, embedding?: number[]): Promise<MemoryResult[]> {
         const results = this.fuse.search(query);
         return results.slice(0, limit).map(r => ({
             ...r.item,
