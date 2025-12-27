@@ -1,4 +1,5 @@
 import fs from 'fs';
+import chokidar from 'chokidar';
 import path from 'path';
 import { EventEmitter } from 'events';
 
@@ -9,7 +10,7 @@ export interface Prompt {
 }
 
 export class PromptManager extends EventEmitter {
-    private watcher: fs.FSWatcher | null = null;
+    private watcher: chokidar.FSWatcher | null = null;
     private prompts: Map<string, Prompt> = new Map();
 
     constructor(private promptsDir: string) {
@@ -21,24 +22,20 @@ export class PromptManager extends EventEmitter {
             fs.mkdirSync(this.promptsDir, { recursive: true });
         }
 
-        this.watcher = fs.watch(this.promptsDir, (eventType, filename) => {
-            if (filename) {
-                this.loadPrompt(path.join(this.promptsDir, filename));
-            }
+        this.watcher = chokidar.watch(this.promptsDir, {
+            ignored: /(^|[\/\\])\../,
+            persistent: true
         });
 
-        this.loadAll();
-    }
+        this.watcher
+            .on('add', (filepath) => this.loadPrompt(filepath))
+            .on('change', (filepath) => this.loadPrompt(filepath))
+            .on('unlink', (filepath) => this.removePrompt(filepath));
 
-    private loadAll() {
-        const files = fs.readdirSync(this.promptsDir);
-        for (const file of files) {
-            this.loadPrompt(path.join(this.promptsDir, file));
-        }
+        console.log(`[PromptManager] Watching ${this.promptsDir}`);
     }
 
     private loadPrompt(filepath: string) {
-        if (!fs.existsSync(filepath)) return;
         try {
             const content = fs.readFileSync(filepath, 'utf-8');
             const name = path.basename(filepath, path.extname(filepath));
@@ -51,6 +48,12 @@ export class PromptManager extends EventEmitter {
         } catch (e) {
             console.error(`Failed to load prompt ${filepath}`, e);
         }
+    }
+
+    private removePrompt(filepath: string) {
+        const name = path.basename(filepath, path.extname(filepath));
+        this.prompts.delete(name);
+        this.emit('updated', this.getPrompts());
     }
 
     getPrompts(): Prompt[] {
