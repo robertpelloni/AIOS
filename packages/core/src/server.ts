@@ -92,7 +92,8 @@ export class CoreService {
     this.agentManager = new AgentManager(rootDir);
     this.skillManager = new SkillManager(path.join(rootDir, 'skills'));
     this.promptManager = new PromptManager(path.join(rootDir, 'prompts'));
-    this.contextManager = new ContextManager(path.join(rootDir, 'context'));
+    // Watch internal context AND current working directory for project-specific context
+    this.contextManager = new ContextManager(path.join(rootDir, 'context'), process.cwd());
     this.commandManager = new CommandManager(path.join(rootDir, 'commands'));
     this.mcpManager = new McpManager(path.join(rootDir, 'mcp-servers'));
     this.configGenerator = new ConfigGenerator(path.join(rootDir, 'mcp-servers'));

@@ -7,13 +7,29 @@ export class ContextManager extends EventEmitter {
   private contextFiles: Map<string, string> = new Map();
   private watcher: chokidar.FSWatcher | null = null;
   
-  constructor(private contextDir: string) {
+  constructor(private contextDir: string, private workspaceDir?: string) {
     super();
   }
 
   async start() {
-    this.watcher = chokidar.watch(this.contextDir, {
-      ignored: /(^|[\/\\])\../,
+    const watchPaths = [this.contextDir];
+    
+    if (this.workspaceDir) {
+        watchPaths.push(
+            path.join(this.workspaceDir, '.cursorrules'),
+            path.join(this.workspaceDir, 'CLAUDE.md'),
+            path.join(this.workspaceDir, 'GEMINI.md'),
+            path.join(this.workspaceDir, '.claude', 'rules')
+        );
+    }
+
+    this.watcher = chokidar.watch(watchPaths, {
+      // Allow dotfiles like .cursorrules
+      ignored: (path, stats) => {
+          // Ignore node_modules and .git
+          if (path.includes('node_modules') || path.includes('.git')) return true;
+          return false;
+      },
       persistent: true
     });
 
@@ -21,7 +37,7 @@ export class ContextManager extends EventEmitter {
     this.watcher.on('change', this.loadContext.bind(this));
     this.watcher.on('unlink', this.removeContext.bind(this));
     
-    console.log(`[ContextManager] Watching ${this.contextDir}`);
+    console.log(`[ContextManager] Watching context in ${this.contextDir} and workspace ${this.workspaceDir}`);
   }
 
   private async loadContext(filepath: string) {
