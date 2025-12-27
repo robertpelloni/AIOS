@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  hub:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+      - ./documents:/app/documents
+      - ./sessions:/app/sessions
+      - ./profiles:/app/profiles
+      - ./handoffs:/app/handoffs
+      - ./logs:/app/logs
+    environment:
+      - MCP_PROGRESSIVE_MODE=true
+    restart: unless-stopped
